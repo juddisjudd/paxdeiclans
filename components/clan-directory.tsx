@@ -34,19 +34,16 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
     setInitialState,
   } = useClans();
 
-  // Initialize with server data
   useEffect(() => {
     setInitialState(initialData);
   }, [initialData, setInitialState]);
 
-  // Fetch clans when filters change
   useEffect(() => {
     fetchClans(filters);
   }, [filters, fetchClans]);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     if (key === "tags" && value === "") {
-      // Clear all tags
       setFilters((prev) => ({
         ...prev,
         tags: [],
@@ -56,7 +53,7 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
       setFilters((prev) => ({
         ...prev,
         [key]: value,
-        page: 1, // Reset to first page when filters change
+        page: 1,
       }));
     }
   };
@@ -80,7 +77,6 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
 
   const handleClanAdd = async (clanData: ClanFormData) => {
     await addClan(clanData);
-    // Reset filters and fetch latest data
     setFilters({
       tags: [],
       location: "all",
@@ -133,7 +129,6 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
               <ClanGrid
                 clans={clans}
                 onBumpSuccess={() => {
-                  // Refetch clans to get the updated order
                   fetchClans(filters);
                 }}
               />

@@ -38,10 +38,14 @@ interface AddClanDialogProps {
   onClanAdd: (clan: ClanFormData) => Promise<void>;
 }
 
-const RequiredLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const RequiredLabel: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => (
   <span className="flex items-center gap-1">
     {children}
-    <span className="text-red-500" title="Required field">*</span>
+    <span className="text-red-500" title="Required field">
+      *
+    </span>
   </span>
 );
 
@@ -49,35 +53,37 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<ClanFormData>(defaultClanData);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof ClanFormData, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof ClanFormData, string>>
+  >({});
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof ClanFormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Clan name is required';
+      newErrors.name = "Clan name is required";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = "Description is required";
     }
 
     if (formData.tags.length === 0) {
-      newErrors.tags = 'Select at least one tag';
+      newErrors.tags = "Select at least one tag";
     }
 
     if (!formData.location) {
-      newErrors.location = 'Location is required';
+      newErrors.location = "Location is required";
     }
 
     if (!formData.language) {
-      newErrors.language = 'Language is required';
+      newErrors.language = "Language is required";
     }
 
     if (!formData.discordUrl.trim()) {
-      newErrors.discordUrl = 'Discord invite link is required';
+      newErrors.discordUrl = "Discord invite link is required";
     } else if (!formData.discordUrl.match(/^https:\/\/discord\.gg\//)) {
-      newErrors.discordUrl = 'Must be a valid Discord invite link';
+      newErrors.discordUrl = "Must be a valid Discord invite link";
     }
 
     setErrors(newErrors);
@@ -86,35 +92,33 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await onClanAdd(formData);
       setFormData(defaultClanData);
       setOpen(false);
     } catch (error) {
-      console.error('Failed to add clan:', error);
-      // You might want to show an error message to the user here
+      console.error("Failed to add clan:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleTagChange = (tag: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag]
+        ? prev.tags.filter((t) => t !== tag)
+        : [...prev.tags, tag],
     }));
-    // Clear tag error when user selects a tag
     if (errors.tags) {
-      setErrors(prev => ({ ...prev, tags: undefined }));
+      setErrors((prev) => ({ ...prev, tags: undefined }));
     }
   };
 
@@ -150,7 +154,7 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
               onChange={(e) => {
                 setFormData({ ...formData, name: e.target.value });
                 if (errors.name) {
-                  setErrors(prev => ({ ...prev, name: undefined }));
+                  setErrors((prev) => ({ ...prev, name: undefined }));
                 }
               }}
               className={errors.name ? "border-red-500" : ""}
@@ -163,11 +167,13 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
             <Input
               id="clanImage"
               value={formData.imageUrl}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, imageUrl: e.target.value })
+              }
               placeholder="https://imgur.com/your-image"
             />
             <p className="text-sm text-muted-foreground">
-              Paste an Imgur image URL, or leave empty to use default image
+              Paste an Imgur image URL, or leave empty to use default image.
             </p>
           </div>
 
@@ -184,7 +190,10 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
                   if (newValue.length <= 200) {
                     setFormData({ ...formData, description: newValue });
                     if (errors.description) {
-                      setErrors(prev => ({ ...prev, description: undefined }));
+                      setErrors((prev) => ({
+                        ...prev,
+                        description: undefined,
+                      }));
                     }
                   }
                 }}
@@ -195,9 +204,9 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
                 maxLength={200}
               />
               <div className="absolute right-0 -bottom-6">
-                <CharacterCounter 
-                  current={formData.description.length} 
-                  max={200} 
+                <CharacterCounter
+                  current={formData.description.length}
+                  max={200}
                 />
               </div>
             </div>
@@ -232,11 +241,13 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
               onValueChange={(value) => {
                 setFormData({ ...formData, location: value });
                 if (errors.location) {
-                  setErrors(prev => ({ ...prev, location: undefined }));
+                  setErrors((prev) => ({ ...prev, location: undefined }));
                 }
               }}
             >
-              <SelectTrigger className={errors.location ? "border-red-500" : ""}>
+              <SelectTrigger
+                className={errors.location ? "border-red-500" : ""}
+              >
                 <SelectValue placeholder="Select location..." />
               </SelectTrigger>
               <SelectContent>
@@ -259,19 +270,23 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
               onValueChange={(value) => {
                 setFormData({ ...formData, language: value });
                 if (errors.language) {
-                  setErrors(prev => ({ ...prev, language: undefined }));
+                  setErrors((prev) => ({ ...prev, language: undefined }));
                 }
               }}
             >
-              <SelectTrigger className={errors.language ? "border-red-500" : ""}>
+              <SelectTrigger
+                className={errors.language ? "border-red-500" : ""}
+              >
                 <SelectValue placeholder="Select language..." />
               </SelectTrigger>
               <SelectContent>
-                {languageOptions.map((option: { value: string; label: string }) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
+                {languageOptions.map(
+                  (option: { value: string; label: string }) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
             <ErrorMessage error={errors.language} />
@@ -287,7 +302,7 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
               onChange={(e) => {
                 setFormData({ ...formData, discordUrl: e.target.value });
                 if (errors.discordUrl) {
-                  setErrors(prev => ({ ...prev, discordUrl: undefined }));
+                  setErrors((prev) => ({ ...prev, discordUrl: undefined }));
                 }
               }}
               placeholder="https://discord.gg/..."
@@ -296,12 +311,12 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
             <ErrorMessage error={errors.discordUrl} />
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Adding...' : 'Add Clan'}
+            {isSubmitting ? "Adding..." : "Add Clan"}
           </Button>
         </form>
       </DialogContent>

@@ -1,17 +1,15 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getDiscordInviteInfo } from '@/lib/discord-utils';
-import { type Clan } from '@prisma/client';
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { getDiscordInviteInfo } from "@/lib/discord-utils";
 
-// Only allow GET requests from Vercel Cron
-export const runtime = 'edge';
-export const preferredRegion = 'iad1';
-export const dynamic = 'force-dynamic';
+export const runtime = "edge";
+export const preferredRegion = "iad1";
+export const dynamic = "force-dynamic";
 
-const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
 type UpdateResult = {
-  status: 'success' | 'failed' | 'skipped';
+  status: "success" | "failed" | "skipped";
   id: number;
   reason?: string;
   members?: number;
@@ -26,43 +24,48 @@ interface ClanWithDiscord {
 
 export async function GET(request: Request) {
   try {
-    // Verify the request is from Vercel Cron
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET_KEY}`) {
-      return new Response('Unauthorized', { status: 401 });
+      return new Response("Unauthorized", { status: 401 });
     }
 
     const clans = await prisma.clan.findMany({
       select: {
         id: true,
         discordUrl: true,
-        discordLastUpdate: true
-      }
+        discordLastUpdate: true,
+      },
     });
 
-    console.log(`Starting daily Discord stats update for ${clans.length} clans`);
+    console.log(
+      `Starting daily Discord stats update for ${clans.length} clans`
+    );
 
     const updates = await Promise.allSettled(
       clans.map(async (clan: ClanWithDiscord): Promise<UpdateResult> => {
-        // Skip if updated in the last 24 hours
-        if (clan.discordLastUpdate && 
-            new Date().getTime() - clan.discordLastUpdate.getTime() < TWENTY_FOUR_HOURS) {
-          return { 
-            status: 'skipped',
+        if (
+          clan.discordLastUpdate &&
+          new Date().getTime() - clan.discordLastUpdate.getTime() <
+            TWENTY_FOUR_HOURS
+        ) {
+          return {
+            status: "skipped",
             id: clan.id,
-            reason: 'Updated within last 24 hours'
+            reason: "Updated within last 24 hours",
           };
         }
 
         try {
           const discordInfo = await getDiscordInviteInfo(clan.discordUrl);
-          
+
           if (!discordInfo.isValid) {
-            console.warn(`Invalid Discord invite for clan ${clan.id}: ${discordInfo.error}`);
+            console.warn(
+              `Invalid Discord invite for clan ${clan.id}: ${discordInfo.error}`
+            );
             return {
-              status: 'failed',
+              status: "failed",
               id: clan.id,
-              reason: discordInfo.error
+              reason: discordInfo.error,
             };
           }
 
@@ -71,46 +74,53 @@ export async function GET(request: Request) {
             data: {
               discordMembers: discordInfo.memberCount || null,
               discordOnline: discordInfo.presenceCount || null,
-              discordLastUpdate: new Date()
-            }
+              discordLastUpdate: new Date(),
+            },
           });
 
           return {
-            status: 'success',
+            status: "success",
             id: clan.id,
             members: discordInfo.memberCount,
-            online: discordInfo.presenceCount
+            online: discordInfo.presenceCount,
           };
         } catch (error) {
           console.error(`Error updating clan ${clan.id}:`, error);
           return {
-            status: 'failed',
+            status: "failed",
             id: clan.id,
-            reason: error instanceof Error ? error.message : 'Unknown error'
+            reason: error instanceof Error ? error.message : "Unknown error",
           };
         }
       })
     );
 
-    // Generate summary
     const summary = {
       total: clans.length,
-      updated: updates.filter(r => r.status === 'fulfilled' && r.value.status === 'success').length,
-      skipped: updates.filter(r => r.status === 'fulfilled' && r.value.status === 'skipped').length,
-      failed: updates.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.status === 'failed')).length,
-      timestamp: new Date().toISOString()
+      updated: updates.filter(
+        (r) => r.status === "fulfilled" && r.value.status === "success"
+      ).length,
+      skipped: updates.filter(
+        (r) => r.status === "fulfilled" && r.value.status === "skipped"
+      ).length,
+      failed: updates.filter(
+        (r) =>
+          r.status === "rejected" ||
+          (r.status === "fulfilled" && r.value.status === "failed")
+      ).length,
+      timestamp: new Date().toISOString(),
     };
 
-    console.log('Discord stats update complete:', summary);
-    
+    console.log("Discord stats update complete:", summary);
+
     return NextResponse.json({
       success: true,
-      summary
+      summary,
     });
   } catch (error) {
-    console.error('Failed to update Discord stats:', error);
+    console.error("Failed to update Discord stats:", error);
     return NextResponse.json(
-      { error: 'Failed to update Discord stats' },
+      { error: "Failed to update Discord stats" },
       { status: 500 }
     );
   }

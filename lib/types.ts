@@ -1,4 +1,4 @@
-import { type Clan as PrismaClan } from '@prisma/client';
+import { type Clan as PrismaClan } from "@prisma/client";
 
 export type Clan = PrismaClan;
 
