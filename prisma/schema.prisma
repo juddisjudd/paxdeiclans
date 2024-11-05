@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+enum ClanTag {
+  pve
+  pvp
+  pvx
+  crafting
+  casual
+  hardcore
+  roleplay
+  trading
+}
+
+enum ClanLocation {
+  Europe_Africa @map("Europe/Africa")
+  Americas
+  Asia_Oceania @map("Asia/Oceania")
+  Worldwide
+}
+
+model Clan {
+  id              Int          @id @default(autoincrement())
+  name            String       @db.VarChar(100)
+  imageUrl        String?      @map("image_url")
+  description     String       @db.VarChar(200)
+  tags            ClanTag[]
+  location        ClanLocation
+  language        String
+  discordUrl      String       @map("discord_url")
+  discordMembers  Int?         @map("discord_members")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@index([name])
+  @@map("clans")
+}
