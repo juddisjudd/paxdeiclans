@@ -76,9 +76,20 @@ export function ClanCard({ clan }: ClanCardProps) {
             <SiDiscord className="w-4 h-4 mr-2" />
             Join Discord
           </Button>
-          {clan.discordMembers !== null && (
-            <div className="text-sm text-center text-[#f0f0f0] bg-[#000]/80 px-2 py-0.5 rounded">
-              {clan.discordMembers.toLocaleString()} Server {clan.discordMembers === 1 ? 'Member' : 'Members'}
+          {(clan.discordMembers !== null || clan.discordOnline !== null) && (
+            <div className="text-xs text-center space-y-0.5">
+              <div className="text-muted-foreground">
+                {clan.discordMembers?.toLocaleString() ?? '?'} server {clan.discordMembers === 1 ? 'member' : 'members'}
+              </div>
+              {clan.discordOnline !== null && (
+                <div className="text-emerald-600 flex items-center justify-center gap-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  {clan.discordOnline.toLocaleString()} online
+                </div>
+              )}
             </div>
           )}
         </CardFooter>

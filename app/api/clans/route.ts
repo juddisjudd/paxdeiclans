@@ -97,11 +97,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Convert location format and add Discord member count
+    // Convert location format and add Discord member counts
     const prismaData = {
       ...data,
       location: data.location.replace('/', '_') as any,
-      discordMembers: discordInfo.memberCount || null
+      discordMembers: discordInfo.memberCount || null,
+      discordOnline: discordInfo.presenceCount || null,
+      discordLastUpdate: new Date()
     };
 
     const clan = await prisma.clan.create({

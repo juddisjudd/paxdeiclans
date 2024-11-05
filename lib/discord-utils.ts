@@ -1,7 +1,7 @@
 export interface DiscordInviteInfo {
     isValid: boolean;
     memberCount?: number;
-    presenceCount?: number;
+    presenceCount?: number;  // This is the online count
     guildName?: string;
     error?: string;
   }
@@ -14,8 +14,11 @@ export interface DiscordInviteInfo {
         return { isValid: false, error: 'Invalid invite URL format' };
       }
   
-      // Call Discord's API
-      const response = await fetch(`https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`);
+      // Call Discord's API with with_counts=true to get both total and online counts
+      const response = await fetch(
+        `https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`,
+        { headers: { 'Accept': 'application/json' } }
+      );
       
       if (!response.ok) {
         return { 
@@ -29,7 +32,7 @@ export interface DiscordInviteInfo {
       return {
         isValid: true,
         memberCount: data.approximate_member_count,
-        presenceCount: data.approximate_presence_count,
+        presenceCount: data.approximate_presence_count, // This is the online count
         guildName: data.guild?.name
       };
     } catch (error) {
