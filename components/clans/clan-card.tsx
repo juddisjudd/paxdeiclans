@@ -65,7 +65,8 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
       <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#B3955D]" />
       <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#B3955D]" />
 
-      <div className="relative h-40">
+      {/* Image Section */}
+      <div className="relative h-48 flex-shrink-0">
         <Image
           src={clan.imageUrl || "/images/clan-placeholder.png"}
           alt={clan.name}
@@ -75,8 +76,7 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
           priority={false}
         />
         <div className="absolute bottom-2 right-2 bg-black/50 px-2 py-1 rounded text-xs text-white flex items-center gap-2">
-          <TimeDisplay date={clan.lastBumpedAt} />{" "}
-          {/* Using lastBumpedAt instead of createdAt */}
+          <TimeDisplay date={clan.lastBumpedAt} />
           <Button
             variant="ghost"
             size="sm"
@@ -92,17 +92,18 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
         </div>
       </div>
 
-      <div className="flex flex-col flex-grow">
-        <CardHeader className="pb-2">
+      {/* Content Section */}
+      <div className="flex flex-col flex-1">
+        <CardHeader className="py-2 space-y-2">
           <h2 className="text-xl font-serif text-[#4A3D2C] text-center">
             {clan.name}
           </h2>
-          <div className="flex gap-2 flex-wrap justify-center">
-            {clan.tags.map((tag) => (
+          <div className="flex gap-1.5 justify-center">
+            {clan.tags.slice(0, 5).map((tag) => (
               <Badge
                 key={tag}
                 variant="outline"
-                className="bg-[#B3955D]/10 text-[#4A3D2C] border-[#B3955D]"
+                className="bg-[#B3955D]/10 text-[#4A3D2C] border-[#B3955D] px-2 py-0.5 text-xs"
               >
                 {tag.toLowerCase()}
               </Badge>
@@ -113,24 +114,30 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
           )}
         </CardHeader>
 
-        <CardContent className="pb-2 flex-grow">
-          <div className="flex flex-col h-full">
-            <p className="text-[#6B5C45] text-sm mb-4 line-clamp-4">
+        <CardContent className="pb-0 flex flex-col flex-1">
+          <div className="flex flex-col h-[100px]">
+            <p className="text-[#6B5C45] text-sm line-clamp-4">
               {clan.description}
             </p>
-            <div className="mt-auto space-y-1 text-sm">
-              <p className="text-[#4A3D2C]">
-                <span className="font-semibold">Location:</span>{" "}
-                {clan.location.replace("_", "/")}
-              </p>
-              <p className="text-[#4A3D2C]">
-                <span className="font-semibold">Language:</span> {clan.language}
-              </p>
+          </div>
+
+          {/* Location & Language - Fixed position */}
+          <div className="flex justify-between text-sm text-[#4A3D2C] py-1.5 border-t border-[#B3955D]/20">
+            <div className="flex items-center">
+              <span className="font-semibold">Location:</span>{" "}
+              {clan.location.replace("_", "/")}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold">Language:</span>
+              <span className="max-w-[80px] truncate" title={clan.language}>
+                {clan.language}
+              </span>
             </div>
           </div>
         </CardContent>
 
-        <CardFooter className="pt-2 flex flex-col gap-1">
+        {/* Discord Section */}
+        <CardFooter className="py-2 flex flex-col gap-1">
           <Button
             className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white"
             onClick={() => window.open(clan.discordUrl, "_blank")}
@@ -138,23 +145,27 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
             <SiDiscord className="w-4 h-4" />
             Join Discord
           </Button>
-          {(clan.discordMembers !== null || clan.discordOnline !== null) && (
-            <div className="text-xs text-center space-y-0.5">
-              <div className="text-muted-foreground">
-                {clan.discordMembers?.toLocaleString() ?? "?"} Server{" "}
-                {clan.discordMembers === 1 ? "Member" : "Members"}
-              </div>
-              {clan.discordOnline !== null && (
-                <div className="text-emerald-600 flex items-center justify-center gap-1">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  {clan.discordOnline.toLocaleString()} Online
+          <div className="text-xs text-center space-y-0.5 min-h-[32px]">
+            {clan.discordMembers !== null || clan.discordOnline !== null ? (
+              <>
+                <div className="text-muted-foreground">
+                  {clan.discordMembers?.toLocaleString() ?? "?"} Server{" "}
+                  {clan.discordMembers === 1 ? "Member" : "Members"}
                 </div>
-              )}
-            </div>
-          )}
+                {clan.discordOnline !== null && (
+                  <div className="text-emerald-600 flex items-center justify-center gap-1">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    {clan.discordOnline.toLocaleString()} Online
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-muted-foreground">&nbsp;</div>
+            )}
+          </div>
         </CardFooter>
       </div>
     </Card>
