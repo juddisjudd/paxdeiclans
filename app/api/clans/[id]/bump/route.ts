@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
-    const clanId = parseInt(params.id);
+    const clanId = parseInt(context.params.id);
     if (isNaN(clanId)) {
       return NextResponse.json({ error: "Invalid clan ID" }, { status: 400 });
     }
