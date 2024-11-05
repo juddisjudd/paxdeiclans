@@ -70,10 +70,10 @@ export function ClanCard({ clan }: ClanCardProps) {
 
         <CardFooter className="pt-2 flex flex-col gap-1">
           <Button
-            className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white"
+            className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white font-bold"
             onClick={() => window.open(clan.discordUrl, '_blank')}
           >
-            <SiDiscord className="w-4 h-4 mr-2" />
+            <SiDiscord className="w-4 h-4" />
             Join Discord
           </Button>
           {(clan.discordMembers !== null || clan.discordOnline !== null) && (

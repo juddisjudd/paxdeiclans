@@ -29,11 +29,8 @@ import {
     onClanAdd 
   }: ClanFiltersProps) {
     const handleClearFilters = () => {
-      // Clear location and language
       onFilterChange('location', 'all');
       onFilterChange('language', 'all');
-      
-      // Clear all tags at once instead of one by one
       onFilterChange('tags', '');
     };
   
@@ -49,7 +46,7 @@ import {
                 className={`cursor-pointer ${
                   selectedTags.includes(tag.value)
                     ? "bg-[#B3955D] hover:bg-[#8C714A]"
-                    : "hover:bg-[#B3955D]/10"
+                    : "hover:bg-[#B3955D]/50"
                 }`}
                 title={tag.description}
                 onClick={() => onTagToggle(tag.value)}

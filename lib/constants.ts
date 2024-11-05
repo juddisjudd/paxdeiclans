@@ -16,8 +16,8 @@ export const tagOptions = [
     { label: "Worldwide", value: "Worldwide" },
   ] as const;
   
-  // Most common languages in gaming communities
   export const languageOptions = [
+    { label: "Multilingual", value: "Multilingual" },
     { label: "English", value: "English" },
     { label: "Spanish", value: "Spanish" },
     { label: "French", value: "French" },
@@ -43,4 +43,8 @@ export const tagOptions = [
     { label: "Czech", value: "Czech" },
     { label: "Hungarian", value: "Hungarian" },
     { label: "Romanian", value: "Romanian" },
-  ].sort((a, b) => a.label.localeCompare(b.label));
+  ].sort((a, b) => {
+    if (a.value === "Multilingual") return -1;
+    if (b.value === "Multilingual") return 1;
+    return a.label.localeCompare(b.label);
+  });
