@@ -10,7 +10,8 @@ export async function getDiscordInviteInfo(
   inviteUrl: string
 ): Promise<DiscordInviteInfo> {
   try {
-    const inviteCode = inviteUrl.split("discord.gg/")[1];
+    const trimmedUrl = inviteUrl.trim();
+    const inviteCode = trimmedUrl.split("discord.gg/")[1]?.trim();
     if (!inviteCode) {
       return { isValid: false, error: "Invalid invite URL format" };
     }

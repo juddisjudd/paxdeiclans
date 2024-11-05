@@ -82,7 +82,7 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
 
     if (!formData.discordUrl.trim()) {
       newErrors.discordUrl = "Discord invite link is required";
-    } else if (!formData.discordUrl.match(/^https:\/\/discord\.gg\//)) {
+    } else if (!formData.discordUrl.trim().match(/^https:\/\/discord\.gg\//)) {
       newErrors.discordUrl = "Must be a valid Discord invite link";
     }
 
@@ -170,10 +170,10 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
               onChange={(e) =>
                 setFormData({ ...formData, imageUrl: e.target.value })
               }
-              placeholder="https://imgur.com/your-image"
+              placeholder="https://imgur.com/your-image.png"
             />
             <p className="text-sm text-muted-foreground">
-              Paste an Imgur image URL, or leave empty to use default image.
+              imgur, discord, or github image link (200x400) ideal size.
             </p>
           </div>
 
