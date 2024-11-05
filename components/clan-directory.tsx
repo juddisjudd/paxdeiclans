@@ -1,52 +1,97 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
 import { ClanFilters } from "./clans/clan-filters";
-import { type FilterState, type ClanFormData } from "@/lib/types";
+import { type FilterState, type ClanFormData, type Clan } from "@/lib/types";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface ClanDirectoryProps {
   children: React.ReactNode;
+  initialData: {
+    clans: Clan[];
+    totalCount: number;
+  };
 }
 
-export function ClanDirectory({ children }: ClanDirectoryProps) {
-  const [filters, setFilters] = useState<FilterState>({
-    tags: [],
-    location: "all",
-    language: "all",
-    page: 1,
-  });
+export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const currentFilters: FilterState = {
+    tags: searchParams.getAll("tags[]"),
+    location: searchParams.get("location") || "all",
+    language: searchParams.get("language") || "all",
+    page: Number(searchParams.get("page")) || 1,
+  };
+
+  const updateURL = (newFilters: FilterState) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("tags[]");
+    newFilters.tags.forEach((tag) => {
+      params.append("tags[]", tag);
+    });
+
+    if (newFilters.location !== "all") {
+      params.set("location", newFilters.location);
+    } else {
+      params.delete("location");
+    }
+
+    if (newFilters.language !== "all") {
+      params.set("language", newFilters.language);
+    } else {
+      params.delete("language");
+    }
+
+    if (newFilters.page > 1) {
+      params.set("page", newFilters.page.toString());
+    } else {
+      params.delete("page");
+    }
+
+    router.push(`/?${params.toString()}`);
+  };
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     if (key === "tags" && value === "") {
-      setFilters((prev) => ({
-        ...prev,
+      updateURL({
+        ...currentFilters,
         tags: [],
         page: 1,
-      }));
-    } else {
-      setFilters((prev) => ({
-        ...prev,
+      });
+    } else if (key === "tags") {
+      updateURL({
+        ...currentFilters,
+        tags: [value],
+        page: 1,
+      });
+    } else if (key === "location" || key === "language") {
+      updateURL({
+        ...currentFilters,
         [key]: value,
         page: 1,
-      }));
+      });
     }
   };
 
   const handleTagToggle = (tag: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter((t) => t !== tag)
-        : [...prev.tags, tag],
+    const newTags = currentFilters.tags.includes(tag)
+      ? currentFilters.tags.filter((t) => t !== tag)
+      : [...currentFilters.tags, tag];
+
+    updateURL({
+      ...currentFilters,
+      tags: newTags,
       page: 1,
-    }));
+    });
   };
 
   const handlePageChange = (page: number) => {
-    setFilters((prev) => ({
-      ...prev,
+    updateURL({
+      ...currentFilters,
       page,
-    }));
+    });
   };
 
   const handleClanAdd = async (clanData: ClanFormData) => {
@@ -64,7 +109,7 @@ export function ClanDirectory({ children }: ClanDirectoryProps) {
         throw new Error(errorData.error || "Failed to create clan");
       }
 
-      setFilters({
+      updateURL({
         tags: [],
         location: "all",
         language: "all",
@@ -89,10 +134,10 @@ export function ClanDirectory({ children }: ClanDirectoryProps) {
         </div>
 
         <ClanFilters
-          filters={filters}
+          filters={currentFilters}
           onFilterChange={handleFilterChange}
           onTagToggle={handleTagToggle}
-          selectedTags={filters.tags}
+          selectedTags={currentFilters.tags}
           onClanAdd={handleClanAdd}
         />
 

@@ -6,7 +6,7 @@ import { getDiscordInviteInfo } from "@/lib/discord-utils";
 
 const ClanSchema = z.object({
   name: z.string().min(3).max(100),
-  imageUrl: z.string().url().optional().nullable(),
+  imageUrl: z.string().url().nullish().or(z.literal("")),
   description: z
     .string()
     .min(10, "Description must be at least 10 characters")
@@ -93,7 +93,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    const data = ClanSchema.parse(json);
+    const data = ClanSchema.parse({
+      ...json,
+      imageUrl: json.imageUrl || null,
+    });
 
     const discordInfo = await getDiscordInviteInfo(data.discordUrl);
 
@@ -106,6 +109,7 @@ export async function POST(request: Request) {
 
     const prismaData = {
       ...data,
+      imageUrl: data.imageUrl || null,
       location: data.location.replace("/", "_") as any,
       discordMembers: discordInfo.memberCount || null,
       discordOnline: discordInfo.presenceCount || null,

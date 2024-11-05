@@ -1,39 +1,90 @@
 import { Suspense } from "react";
 import { ClanDirectory } from "@/components/clan-directory";
-import { ClanGrid } from "@/components/clans/clan-grid";
 import { ClanGridSkeleton } from "@/components/clans/clan-grid-skeleton";
 import prisma from "@/lib/prisma";
+import { ClanGrid } from "@/components/clans/clan-grid";
+import { Prisma } from "@prisma/client";
 
-async function getInitialClans() {
-  // Simulate some delay to show loading state
-  // await new Promise((resolve) => setTimeout(resolve, 2000));
-  const [clans, totalCount] = await Promise.all([
-    prisma.clan.findMany({
-      take: 9,
-      orderBy: {
-        createdAt: "desc",
-      },
-    }),
-    prisma.clan.count(),
-  ]);
-
-  return {
-    clans,
-    totalCount,
-  };
+interface PageProps {
+  searchParams: { [key: string]: string | string[] };
 }
 
-export default async function Page() {
+async function getFilteredClans(searchParams: {
+  [key: string]: string | string[];
+}) {
+  const tags = Array.isArray(searchParams["tags[]"])
+    ? searchParams["tags[]"]
+    : searchParams["tags[]"]
+    ? [searchParams["tags[]"]]
+    : [];
+  const location = searchParams.location || "all";
+  const language = searchParams.language || "all";
+  const page = Number(searchParams.page) || 1;
+  const limit = 9;
+  const offset = (page - 1) * limit;
+
+  const where: Prisma.ClanWhereInput = {};
+  const conditions: Prisma.ClanWhereInput[] = [];
+
+  if (tags.length > 0) {
+    conditions.push({
+      tags: {
+        hasSome: tags as any[],
+      },
+    });
+  }
+
+  if (location !== "all") {
+    conditions.push({
+      location: (location as string).replace("/", "_") as any,
+    });
+  }
+
+  if (language !== "all") {
+    conditions.push({
+      language: language as string,
+    });
+  }
+
+  if (conditions.length > 0) {
+    where.AND = conditions;
+  }
+
+  const [clans, totalCount] = await Promise.all([
+    prisma.clan.findMany({
+      where,
+      take: limit,
+      skip: offset,
+      orderBy: {
+        lastBumpedAt: "desc",
+      },
+    }),
+    prisma.clan.count({ where }),
+  ]);
+
+  return { clans, totalCount };
+}
+
+async function FilteredClans({
+  searchParams,
+}: {
+  searchParams: PageProps["searchParams"];
+}) {
+  const data = await getFilteredClans(searchParams);
+  return <ClanGrid initialData={data} />;
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const initialData = await getFilteredClans({});
+
   return (
-    <ClanDirectory>
-      <Suspense fallback={<ClanGridSkeleton />}>
-        <InitialClans />
+    <ClanDirectory initialData={initialData}>
+      <Suspense
+        key={JSON.stringify(searchParams)}
+        fallback={<ClanGridSkeleton />}
+      >
+        <FilteredClans searchParams={searchParams} />
       </Suspense>
     </ClanDirectory>
   );
-}
-
-async function InitialClans() {
-  const initialData = await getInitialClans();
-  return <ClanGrid initialData={initialData} />;
 }
