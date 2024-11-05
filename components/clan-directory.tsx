@@ -139,7 +139,7 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
               rel="noopener noreferrer"
               className="ml-2 text-[#B3955D] hover:text-[#8C714A]"
             >
-              Support Us
+              Support This Project
             </a>
           </p>
         </div>
