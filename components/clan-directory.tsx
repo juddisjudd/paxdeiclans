@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { ClanFilters } from "./clans/clan-filters";
 import { ClanGrid } from "./clans/clan-grid";
-import { AddClanDialog } from "./clans/add-clan-dialog";
 import { Pagination } from "./clans/pagination";
 import { useClans } from "@/hooks/use-clans";
 import { type FilterState, type Clan, type ClanFormData } from "@/lib/types";
@@ -38,12 +37,12 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
   // Initialize with server data
   useEffect(() => {
     setInitialState(initialData);
-  }, [initialData]);
+  }, [initialData, setInitialState]);
 
   // Fetch clans when filters change
   useEffect(() => {
     fetchClans(filters);
-  }, [filters.tags, filters.location, filters.language, filters.page]);
+  }, [filters, fetchClans]);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({
@@ -89,7 +88,7 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
 
   return (
     <div className="min-h-screen bg-[#F5F2EA] p-6 flex flex-col">
-<div className="max-w-6xl mx-auto space-y-6 flex-grow">
+      <div className="max-w-6xl mx-auto space-y-6 flex-grow">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-serif text-[#4A3D2C]">Pax Dei Clan Directory</h1>
           <p className="text-[#6B5C45]">Find a clan and begin your medieval journey</p>
@@ -138,7 +137,7 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
               href="https://ko-fi.com/ohitsjudd" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="ml-2 text-[#B3955D] hover:bg-[#8C714A]"
+              className="ml-2 text-[#B3955D] hover:text-[#8C714A]"
             >
               Support Us
             </a>

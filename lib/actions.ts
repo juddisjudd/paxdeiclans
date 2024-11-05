@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { type ClanFormData } from './types';
+import { ClanLocation, ClanTag } from '@prisma/client';
 
 export async function createClan(data: ClanFormData) {
   try {
@@ -11,9 +12,9 @@ export async function createClan(data: ClanFormData) {
         name: data.name,
         imageUrl: data.imageUrl,
         description: data.description,
-        tags: data.tags.map(tag => tag as any),
-        location: data.location.replace('/', '_') as any,
-        language: data.language as any,
+        tags: data.tags.map(tag => tag as ClanTag),
+        location: data.location.replace('/', '_') as ClanLocation,
+        language: data.language,
         discordUrl: data.discordUrl,
       },
     });

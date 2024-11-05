@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getDiscordInviteInfo } from '@/lib/discord-utils';
+import { type Clan } from '@prisma/client';
 
 // Only allow GET requests from Vercel Cron
 export const runtime = 'edge';
@@ -8,6 +9,20 @@ export const preferredRegion = 'iad1';
 export const dynamic = 'force-dynamic';
 
 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+type UpdateResult = {
+  status: 'success' | 'failed' | 'skipped';
+  id: number;
+  reason?: string;
+  members?: number;
+  online?: number;
+};
+
+interface ClanWithDiscord {
+  id: number;
+  discordUrl: string;
+  discordLastUpdate: Date | null;
+}
 
 export async function GET(request: Request) {
   try {
@@ -28,7 +43,7 @@ export async function GET(request: Request) {
     console.log(`Starting daily Discord stats update for ${clans.length} clans`);
 
     const updates = await Promise.allSettled(
-      clans.map(async (clan) => {
+      clans.map(async (clan: ClanWithDiscord): Promise<UpdateResult> => {
         // Skip if updated in the last 24 hours
         if (clan.discordLastUpdate && 
             new Date().getTime() - clan.discordLastUpdate.getTime() < TWENTY_FOUR_HOURS) {
@@ -51,7 +66,7 @@ export async function GET(request: Request) {
             };
           }
 
-          const updated = await prisma.clan.update({
+          await prisma.clan.update({
             where: { id: clan.id },
             data: {
               discordMembers: discordInfo.memberCount || null,
@@ -80,9 +95,9 @@ export async function GET(request: Request) {
     // Generate summary
     const summary = {
       total: clans.length,
-      updated: updates.filter(r => r.status === 'fulfilled' && r.value?.status === 'success').length,
-      skipped: updates.filter(r => r.status === 'fulfilled' && r.value?.status === 'skipped').length,
-      failed: updates.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value?.status === 'failed')).length,
+      updated: updates.filter(r => r.status === 'fulfilled' && r.value.status === 'success').length,
+      skipped: updates.filter(r => r.status === 'fulfilled' && r.value.status === 'skipped').length,
+      failed: updates.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.status === 'failed')).length,
       timestamp: new Date().toISOString()
     };
 
