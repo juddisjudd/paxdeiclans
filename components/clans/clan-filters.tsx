@@ -28,6 +28,15 @@ import {
     selectedTags,
     onClanAdd 
   }: ClanFiltersProps) {
+    const handleClearFilters = () => {
+      // Clear location and language
+      onFilterChange('location', 'all');
+      onFilterChange('language', 'all');
+      
+      // Clear all tags at once instead of one by one
+      onFilterChange('tags', '');
+    };
+  
     return (
       <div className="space-y-4">
         <div className="group">
@@ -95,13 +104,7 @@ import {
         {(selectedTags.length > 0 || filters.location !== 'all' || filters.language !== 'all') && (
           <div className="flex items-center justify-end">
             <button
-              onClick={() => {
-                onFilterChange('location', 'all');
-                onFilterChange('language', 'all');
-                while (selectedTags.length) {
-                  onTagToggle(selectedTags[0]);
-                }
-              }}
+              onClick={handleClearFilters}
               className="text-sm text-[#B3955D] hover:text-[#8C714A] flex items-center gap-1"
             >
               <X className="h-4 w-4" />

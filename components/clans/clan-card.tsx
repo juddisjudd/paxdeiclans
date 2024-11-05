@@ -79,7 +79,7 @@ export function ClanCard({ clan }: ClanCardProps) {
           {(clan.discordMembers !== null || clan.discordOnline !== null) && (
             <div className="text-xs text-center space-y-0.5">
               <div className="text-muted-foreground">
-                {clan.discordMembers?.toLocaleString() ?? '?'} server {clan.discordMembers === 1 ? 'member' : 'members'}
+                {clan.discordMembers?.toLocaleString() ?? '?'} Server {clan.discordMembers === 1 ? 'Member' : 'Members'}
               </div>
               {clan.discordOnline !== null && (
                 <div className="text-emerald-600 flex items-center justify-center gap-1">

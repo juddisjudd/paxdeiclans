@@ -45,11 +45,20 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
   }, [filters, fetchClans]);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-      page: 1, // Reset to first page when filters change
-    }));
+    if (key === 'tags' && value === '') {
+      // Clear all tags
+      setFilters(prev => ({
+        ...prev,
+        tags: [],
+        page: 1,
+      }));
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [key]: value,
+        page: 1, // Reset to first page when filters change
+      }));
+    }
   };
 
   const handleTagToggle = (tag: string) => {
