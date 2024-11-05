@@ -12,6 +12,7 @@ import { X } from "lucide-react";
 import { LanguageSelect } from "./language-select";
 import { AddClanDialog } from "./add-clan-dialog";
 import { type ClanFormData } from "@/lib/types";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface ClanFiltersProps {
   filters: FilterState;
@@ -28,10 +29,11 @@ export function ClanFilters({
   selectedTags,
   onClanAdd,
 }: ClanFiltersProps) {
+  const router = useRouter();
+
   const handleClearFilters = () => {
-    onFilterChange("location", "all");
-    onFilterChange("language", "all");
-    onFilterChange("tags", "");
+    router.push("/");
+    router.refresh();
   };
 
   return (
