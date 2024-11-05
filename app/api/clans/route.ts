@@ -63,7 +63,7 @@ export async function GET(request: Request) {
         take: limit,
         skip: offset,
         orderBy: {
-          createdAt: 'desc'
+          lastBumpedAt: 'desc'
         }
       }),
       prisma.clan.count({ where })

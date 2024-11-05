@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { SiDiscord } from '@icons-pack/react-simple-icons';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,15 +8,56 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { ArrowUp } from 'lucide-react';
 import { type Clan } from '@/lib/types';
 import Image from 'next/image';
 import { TimeDisplay } from './time-display';
 
 interface ClanCardProps {
   clan: Clan;
+  onBumpSuccess?: () => void;
 }
 
-export function ClanCard({ clan }: ClanCardProps) {
+export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
+  const [bumpError, setBumpError] = useState<string | null>(null);
+  const [isBumping, setIsBumping] = useState(false);
+
+  const handleBump = async () => {
+    if (isBumping) return;
+    
+    setIsBumping(true);
+    setBumpError(null);
+
+    try {
+      const response = await fetch(`/api/clans/${clan.id}/bump`, {
+        method: 'POST'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          // Too soon to bump
+          setBumpError(`Can bump again in ${data.hoursRemaining} hours`);
+        } else {
+          setBumpError(data.error || 'Failed to bump clan');
+        }
+        return;
+      }
+
+      // Bump successful
+      if (onBumpSuccess) {
+        onBumpSuccess();
+      }
+    } catch (error) {
+      setBumpError('Failed to bump clan');
+    } finally {
+      setIsBumping(false);
+    }
+  };
+
+  const canBump = Date.now() - new Date(clan.lastBumpedAt).getTime() >= 24 * 60 * 60 * 1000;
+
   return (
     <Card className="relative overflow-hidden border-[#B3955D] bg-white flex flex-col h-[500px]">
       {/* Decorative corners */}
@@ -33,8 +75,18 @@ export function ClanCard({ clan }: ClanCardProps) {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           priority={false}
         />
-        <div className="absolute bottom-2 right-2 bg-black/50 px-2 py-1 rounded text-xs text-white">
-          <TimeDisplay date={clan.createdAt} />
+        <div className="absolute bottom-2 right-2 bg-black/50 px-2 py-1 rounded text-xs text-white flex items-center gap-2">
+          <TimeDisplay date={clan.lastBumpedAt} /> {/* Using lastBumpedAt instead of createdAt */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`p-1 h-6 ${canBump ? 'text-green-400 hover:text-green-300' : 'text-gray-400'}`}
+            onClick={handleBump}
+            disabled={!canBump || isBumping}
+            title={canBump ? 'Bump clan to top' : 'Wait 24 hours between bumps'}
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -52,6 +104,9 @@ export function ClanCard({ clan }: ClanCardProps) {
               </Badge>
             ))}
           </div>
+          {bumpError && (
+            <p className="text-xs text-red-500 text-center mt-1">{bumpError}</p>
+          )}
         </CardHeader>
 
         <CardContent className="pb-2 flex-grow">
@@ -70,16 +125,16 @@ export function ClanCard({ clan }: ClanCardProps) {
 
         <CardFooter className="pt-2 flex flex-col gap-1">
           <Button
-            className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white font-bold"
+            className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white"
             onClick={() => window.open(clan.discordUrl, '_blank')}
           >
-            <SiDiscord className="w-4 h-4" />
+            <SiDiscord className="w-4 h-4 mr-2" />
             Join Discord
           </Button>
           {(clan.discordMembers !== null || clan.discordOnline !== null) && (
             <div className="text-xs text-center space-y-0.5">
               <div className="text-muted-foreground">
-                {clan.discordMembers?.toLocaleString() ?? '?'} Server {clan.discordMembers === 1 ? 'Member' : 'Members'}
+                {clan.discordMembers?.toLocaleString() ?? '?'} server {clan.discordMembers === 1 ? 'member' : 'members'}
               </div>
               {clan.discordOnline !== null && (
                 <div className="text-emerald-600 flex items-center justify-center gap-1">
