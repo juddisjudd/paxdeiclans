@@ -1,46 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ClanFilters } from "./clans/clan-filters";
-import { ClanGrid } from "./clans/clan-grid";
-import { Pagination } from "./clans/pagination";
-import { useClans } from "@/hooks/use-clans";
-import { type FilterState, type Clan, type ClanFormData } from "@/lib/types";
-
-const ITEMS_PER_PAGE = 9;
+import { type FilterState, type ClanFormData } from "@/lib/types";
 
 interface ClanDirectoryProps {
-  initialData: {
-    clans: Clan[];
-    totalCount: number;
-  };
+  children: React.ReactNode;
 }
 
-export function ClanDirectory({ initialData }: ClanDirectoryProps) {
+export function ClanDirectory({ children }: ClanDirectoryProps) {
   const [filters, setFilters] = useState<FilterState>({
     tags: [],
     location: "all",
     language: "all",
     page: 1,
   });
-
-  const {
-    clans,
-    totalCount,
-    isLoading,
-    error,
-    fetchClans,
-    addClan,
-    setInitialState,
-  } = useClans();
-
-  useEffect(() => {
-    setInitialState(initialData);
-  }, [initialData, setInitialState]);
-
-  useEffect(() => {
-    fetchClans(filters);
-  }, [filters, fetchClans]);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     if (key === "tags" && value === "") {
@@ -76,19 +50,30 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
   };
 
   const handleClanAdd = async (clanData: ClanFormData) => {
-    await addClan(clanData);
-    setFilters({
-      tags: [],
-      location: "all",
-      language: "all",
-      page: 1,
-    });
-    await fetchClans({
-      tags: [],
-      location: "all",
-      language: "all",
-      page: 1,
-    });
+    try {
+      const response = await fetch("/api/clans", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(clanData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create clan");
+      }
+
+      setFilters({
+        tags: [],
+        location: "all",
+        language: "all",
+        page: 1,
+      });
+    } catch (error) {
+      console.error("Error adding clan:", error);
+      throw error;
+    }
   };
 
   return (
@@ -111,36 +96,7 @@ export function ClanDirectory({ initialData }: ClanDirectoryProps) {
           onClanAdd={handleClanAdd}
         />
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="text-center py-8">Loading clans...</div>
-        ) : (
-          <>
-            {clans.length === 0 ? (
-              <div className="text-center py-8 text-[#6B5C45]">
-                No clans found. Try adjusting your filters or add a new clan!
-              </div>
-            ) : (
-              <ClanGrid
-                clans={clans}
-                onBumpSuccess={() => {
-                  fetchClans(filters);
-                }}
-              />
-            )}
-
-            <Pagination
-              currentPage={filters.page}
-              totalPages={Math.ceil(totalCount / ITEMS_PER_PAGE)}
-              onPageChange={handlePageChange}
-            />
-          </>
-        )}
+        {children}
       </div>
 
       <footer className="mt-8 py-4 text-center text-[#6B5C45] border-t border-[#B3955D]">
