@@ -135,14 +135,14 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
             className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white"
             onClick={() => window.open(clan.discordUrl, "_blank")}
           >
-            <SiDiscord className="w-4 h-4 mr-2" />
+            <SiDiscord className="w-4 h-4" />
             Join Discord
           </Button>
           {(clan.discordMembers !== null || clan.discordOnline !== null) && (
             <div className="text-xs text-center space-y-0.5">
               <div className="text-muted-foreground">
-                {clan.discordMembers?.toLocaleString() ?? "?"} server{" "}
-                {clan.discordMembers === 1 ? "member" : "members"}
+                {clan.discordMembers?.toLocaleString() ?? "?"} Server{" "}
+                {clan.discordMembers === 1 ? "Member" : "Members"}
               </div>
               {clan.discordOnline !== null && (
                 <div className="text-emerald-600 flex items-center justify-center gap-1">
