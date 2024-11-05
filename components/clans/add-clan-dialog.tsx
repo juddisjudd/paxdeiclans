@@ -57,6 +57,11 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
     Partial<Record<keyof ClanFormData, string>>
   >({});
 
+  const resetForm = () => {
+    setFormData(defaultClanData);
+    setErrors({});
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof ClanFormData, string>> = {};
 
@@ -101,12 +106,19 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
 
     try {
       await onClanAdd(formData);
-      setFormData(defaultClanData);
+      resetForm();
       setOpen(false);
     } catch (error) {
       console.error("Failed to add clan:", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseDialog = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      resetForm();
     }
   };
 
@@ -133,7 +145,7 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleCloseDialog}>
       <DialogTrigger asChild>
         <Button className="bg-[#B3955D] hover:bg-[#8C714A] text-white">
           Add Clan

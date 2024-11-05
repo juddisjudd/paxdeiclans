@@ -115,6 +115,8 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
         language: "all",
         page: 1,
       });
+
+      router.refresh();
     } catch (error) {
       console.error("Error adding clan:", error);
       throw error;
