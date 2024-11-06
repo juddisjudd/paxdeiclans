@@ -4,6 +4,7 @@ import React from "react";
 import { ClanFilters } from "./clans/clan-filters";
 import { type FilterState, type ClanFormData, type Clan } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClanDirectoryProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ interface ClanDirectoryProps {
 export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const currentFilters: FilterState = {
     tags: searchParams.getAll("tags[]"),
@@ -104,9 +106,15 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
         body: JSON.stringify(clanData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create clan");
+        toast({
+          title: "Error Adding Clan",
+          description: data.error || "Failed to create clan",
+          variant: "destructive",
+        });
+        throw new Error(data.error || "Failed to create clan");
       }
 
       updateURL({
@@ -116,11 +124,22 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
         page: 1,
       });
 
+      toast({
+        title: "Success!",
+        description: "Your clan has been added successfully",
+        duration: 3000,
+      });
+
       router.refresh();
     } catch (error) {
       console.error("Error adding clan:", error);
       throw error;
     }
+  };
+
+  const handleClearFilters = () => {
+    router.push("/");
+    router.refresh();
   };
 
   return (
@@ -141,6 +160,7 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
           onTagToggle={handleTagToggle}
           selectedTags={currentFilters.tags}
           onClanAdd={handleClanAdd}
+          onClearFilters={handleClearFilters}
         />
 
         {children}

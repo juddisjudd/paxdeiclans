@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,9 +20,14 @@ import {
 } from "@/components/ui/select";
 import { tagOptions, locationOptions, languageOptions } from "@/lib/constants";
 import { type ClanFormData } from "@/lib/types";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Link, Loader2 } from "lucide-react";
 import { CharacterCounter } from "../ui/character-counter";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { isValidImageUrl, checkImageLoads } from "@/lib/validations";
+import Image from "next/image";
+
+const MAX_TAGS = 5;
 
 const defaultClanData: ClanFormData = {
   name: "",
@@ -52,25 +57,89 @@ const RequiredLabel: React.FC<{ children: React.ReactNode }> = ({
 export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<ClanFormData>(defaultClanData);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isCheckingImage, setIsCheckingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof ClanFormData, string>>
   >({});
+  const { toast } = useToast();
 
   const resetForm = () => {
     setFormData(defaultClanData);
     setErrors({});
+    setImagePreview(null);
   };
+
+  useEffect(() => {
+    if (!formData.imageUrl) {
+      setImagePreview(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      const validationResult = isValidImageUrl(formData.imageUrl);
+
+      if (!validationResult.isValid) {
+        setErrors((prev) => ({
+          ...prev,
+          imageUrl: validationResult.error,
+        }));
+        setImagePreview(null);
+        toast({
+          title: "Invalid Image URL",
+          description: validationResult.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsCheckingImage(true);
+      try {
+        const imageLoads = await checkImageLoads(formData.imageUrl);
+
+        if (!imageLoads) {
+          throw new Error("Failed to load image");
+        }
+
+        setImagePreview(formData.imageUrl);
+        setErrors((prev) => ({ ...prev, imageUrl: undefined }));
+      } catch (error) {
+        setErrors((prev) => ({
+          ...prev,
+          imageUrl: "Unable to load image from URL",
+        }));
+        setImagePreview(null);
+        toast({
+          title: "Image Load Error",
+          description: "Unable to load image from the provided URL",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCheckingImage(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.imageUrl, toast]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof ClanFormData, string>> = {};
 
     if (!formData.name.trim()) {
       newErrors.name = "Clan name is required";
+    } else if (formData.name.length < 3) {
+      newErrors.name = "Clan name must be at least 3 characters";
+    } else if (formData.name.length > 100) {
+      newErrors.name = "Clan name cannot exceed 100 characters";
     }
 
     if (!formData.description.trim()) {
       newErrors.description = "Description is required";
+    } else if (formData.description.length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
+    } else if (formData.description.length > 200) {
+      newErrors.description = "Description cannot exceed 200 characters";
     }
 
     if (formData.tags.length === 0) {
@@ -91,8 +160,22 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
       newErrors.discordUrl = "Must be a valid Discord invite link";
     }
 
+    if (formData.imageUrl && !formData.imageUrl.match(/^https?:\/\/.+/)) {
+      newErrors.imageUrl = "Must be a valid URL";
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    if (Object.keys(newErrors).length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please check the form for errors",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,29 +189,79 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
 
     try {
       await onClanAdd(formData);
+      toast({
+        title: "Success!",
+        description: "Your clan has been created successfully",
+        duration: 3000,
+      });
       resetForm();
       setOpen(false);
     } catch (error) {
       console.error("Failed to add clan:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to create clan",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCloseDialog = (isOpen: boolean) => {
+    if (!isOpen && isSubmitting) {
+      toast({
+        title: "Warning",
+        description: "Please wait while your clan is being created",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setOpen(isOpen);
     if (!isOpen) {
+      if (
+        Object.keys(formData).some(
+          (key) =>
+            formData[key as keyof ClanFormData] !==
+            defaultClanData[key as keyof ClanFormData]
+        )
+      ) {
+        toast({
+          title: "Form Reset",
+          description: "Your form data has been cleared",
+          duration: 2000,
+        });
+      }
       resetForm();
     }
   };
 
   const handleTagChange = (tag: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter((t) => t !== tag)
-        : [...prev.tags, tag],
-    }));
+    setFormData((prev) => {
+      if (prev.tags.includes(tag)) {
+        return {
+          ...prev,
+          tags: prev.tags.filter((t) => t !== tag),
+        };
+      }
+
+      if (prev.tags.length >= MAX_TAGS) {
+        toast({
+          title: "Tag Limit Reached",
+          description: `You can only select up to ${MAX_TAGS} tags`,
+          variant: "destructive",
+        });
+        return prev;
+      }
+
+      return {
+        ...prev,
+        tags: [...prev.tags, tag],
+      };
+    });
+
     if (errors.tags) {
       setErrors((prev) => ({ ...prev, tags: undefined }));
     }
@@ -176,17 +309,47 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="clanImage">Clan Image URL (Optional)</Label>
-            <Input
-              id="clanImage"
-              value={formData.imageUrl}
-              onChange={(e) =>
-                setFormData({ ...formData, imageUrl: e.target.value })
-              }
-              placeholder="https://imgur.com/your-image.png"
-            />
-            <p className="text-sm text-muted-foreground">
-              imgur, discord, or github image link (200x400) ideal size.
-            </p>
+            <div className="relative">
+              <Input
+                id="clanImage"
+                value={formData.imageUrl}
+                onChange={(e) => {
+                  const newUrl = e.target.value;
+                  setFormData({ ...formData, imageUrl: newUrl });
+                  if (!newUrl) {
+                    setErrors((prev) => ({ ...prev, imageUrl: undefined }));
+                    setImagePreview(null);
+                  }
+                }}
+                placeholder="https://imgur.com/your-image.png"
+                className={cn(
+                  errors.imageUrl ? "border-red-500" : "",
+                  isCheckingImage ? "pr-10" : ""
+                )}
+              />
+              {isCheckingImage && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
+            <div className="text-sm space-y-1">
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Link className="h-3 w-3" />
+                Supported: Imgur, Discord, or GitHub image links
+              </p>
+              {imagePreview && (
+                <div className="relative w-full h-32 mt-2 rounded-md overflow-hidden">
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+            </div>
+            <ErrorMessage error={errors.imageUrl} />
           </div>
 
           <div className="space-y-2">
@@ -229,19 +392,51 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
             <Label>
               <RequiredLabel>Clan Tags</RequiredLabel>
             </Label>
-            <div className="grid grid-cols-2 gap-2">
-              {tagOptions.map((tag) => (
-                <div key={tag.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`tag-${tag.value}`}
-                    checked={formData.tags.includes(tag.value)}
-                    onCheckedChange={() => handleTagChange(tag.value)}
-                  />
-                  <Label htmlFor={`tag-${tag.value}`}>{tag.label}</Label>
-                </div>
-              ))}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm text-muted-foreground">
+                <span>Select tags that best describe your clan</span>
+                <span
+                  className={
+                    formData.tags.length >= MAX_TAGS ? "text-red-500" : ""
+                  }
+                >
+                  {formData.tags.length}/{MAX_TAGS}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {tagOptions.map((tag) => {
+                  const isSelected = formData.tags.includes(tag.value);
+                  const atLimit = formData.tags.length >= MAX_TAGS;
+
+                  return (
+                    <div
+                      key={tag.value}
+                      className={cn(
+                        "flex items-center space-x-2",
+                        !isSelected && atLimit && "opacity-50"
+                      )}
+                    >
+                      <Checkbox
+                        id={`tag-${tag.value}`}
+                        checked={isSelected}
+                        onCheckedChange={() => handleTagChange(tag.value)}
+                        disabled={!isSelected && atLimit}
+                      />
+                      <Label
+                        htmlFor={`tag-${tag.value}`}
+                        className={cn(
+                          "cursor-pointer",
+                          !isSelected && atLimit && "cursor-not-allowed"
+                        )}
+                      >
+                        {tag.label}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
+              <ErrorMessage error={errors.tags} />
             </div>
-            <ErrorMessage error={errors.tags} />
           </div>
 
           <div className="space-y-2">

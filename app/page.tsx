@@ -4,6 +4,7 @@ import { ClanGridSkeleton } from "@/components/clans/clan-grid-skeleton";
 import prisma from "@/lib/prisma";
 import { ClanGrid } from "@/components/clans/clan-grid";
 import { Prisma } from "@prisma/client";
+import { Toaster } from "@/components/ui/toaster";
 
 interface PageProps {
   searchParams: { [key: string]: string | string[] };
@@ -78,13 +79,16 @@ export default async function Page({ searchParams }: PageProps) {
   const initialData = await getFilteredClans({});
 
   return (
-    <ClanDirectory initialData={initialData}>
-      <Suspense
-        key={JSON.stringify(searchParams)}
-        fallback={<ClanGridSkeleton />}
-      >
-        <FilteredClans searchParams={searchParams} />
-      </Suspense>
-    </ClanDirectory>
+    <>
+      <ClanDirectory initialData={initialData}>
+        <Suspense
+          key={JSON.stringify(searchParams)}
+          fallback={<ClanGridSkeleton />}
+        >
+          <FilteredClans searchParams={searchParams} />
+        </Suspense>
+      </ClanDirectory>
+      <Toaster />
+    </>
   );
 }

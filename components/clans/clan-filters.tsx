@@ -20,6 +20,7 @@ interface ClanFiltersProps {
   onTagToggle: (tag: string) => void;
   selectedTags: string[];
   onClanAdd: (clan: ClanFormData) => Promise<void>;
+  onClearFilters: () => void;
 }
 
 export function ClanFilters({

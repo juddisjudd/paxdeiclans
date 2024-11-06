@@ -8,10 +8,11 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Loader2 } from "lucide-react";
 import { type Clan } from "@/lib/types";
 import Image from "next/image";
 import { TimeDisplay } from "./time-display";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClanCardProps {
   clan: Clan;
@@ -19,14 +20,17 @@ interface ClanCardProps {
 }
 
 export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
-  const [bumpError, setBumpError] = useState<string | null>(null);
   const [isBumping, setIsBumping] = useState(false);
+  const [optimisticLastBumped, setOptimisticLastBumped] = useState<Date | null>(
+    null
+  );
+  const { toast } = useToast();
 
   const handleBump = async () => {
     if (isBumping) return;
 
     setIsBumping(true);
-    setBumpError(null);
+    setOptimisticLastBumped(new Date());
 
     try {
       const response = await fetch(`/api/clans/${clan.id}/bump`, {
@@ -36,10 +40,20 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
       const data = await response.json();
 
       if (!response.ok) {
+        setOptimisticLastBumped(null);
+
         if (response.status === 429) {
-          setBumpError(`Can bump again in ${data.hoursRemaining} hours`);
+          toast({
+            title: "Cannot Bump Yet",
+            description: `Please wait ${data.hoursRemaining} more hours before bumping again`,
+            variant: "destructive",
+          });
         } else {
-          setBumpError(data.error || "Failed to bump clan");
+          toast({
+            title: "Error",
+            description: data.error || "Failed to bump clan",
+            variant: "destructive",
+          });
         }
         return;
       }
@@ -47,15 +61,32 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
       if (onBumpSuccess) {
         onBumpSuccess();
       }
+
+      toast({
+        title: "Success!",
+        description: "Clan bumped to the top",
+        duration: 2000,
+      });
     } catch (error) {
-      setBumpError("Failed to bump clan");
+      setOptimisticLastBumped(null);
+      toast({
+        title: "Error",
+        description: "Failed to bump clan",
+        variant: "destructive",
+      });
     } finally {
       setIsBumping(false);
     }
   };
 
+  const handleDiscordJoin = () => {
+    window.open(clan.discordUrl, "_blank");
+  };
+
+  const effectiveLastBumpedAt =
+    optimisticLastBumped || new Date(clan.lastBumpedAt);
   const canBump =
-    Date.now() - new Date(clan.lastBumpedAt).getTime() >= 24 * 60 * 60 * 1000;
+    Date.now() - effectiveLastBumpedAt.getTime() >= 24 * 60 * 60 * 1000;
 
   return (
     <Card className="relative overflow-hidden border-[#B3955D] bg-white flex flex-col h-[500px]">
@@ -76,18 +107,28 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
           priority={false}
         />
         <div className="absolute bottom-2 right-2 bg-black/50 px-2 py-1 rounded text-xs text-white flex items-center gap-2">
-          <TimeDisplay date={clan.lastBumpedAt} />
+          <TimeDisplay date={effectiveLastBumpedAt} />
           <Button
             variant="ghost"
             size="sm"
             className={`p-1 h-6 ${
-              canBump ? "text-green-400 hover:text-green-300" : "text-gray-400"
-            }`}
+              canBump
+                ? "text-green-400 hover:text-green-300"
+                : isBumping
+                ? "text-blue-400"
+                : "text-gray-400"
+            } transition-colors duration-200`}
             onClick={handleBump}
             disabled={!canBump || isBumping}
             title={canBump ? "Bump clan to top" : "Wait 24 hours between bumps"}
           >
-            <ArrowUp className="h-4 w-4" />
+            {isBumping ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowUp
+                className={`h-4 w-4 ${isBumping ? "animate-bounce" : ""}`}
+              />
+            )}
           </Button>
         </div>
       </div>
@@ -109,9 +150,6 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
               </Badge>
             ))}
           </div>
-          {bumpError && (
-            <p className="text-xs text-red-500 text-center mt-1">{bumpError}</p>
-          )}
         </CardHeader>
 
         <CardContent className="pb-0 flex flex-col flex-1">
@@ -121,7 +159,6 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
             </p>
           </div>
 
-          {/* Location & Language - Fixed position */}
           <div className="flex justify-between text-sm text-[#4A3D2C] py-1.5 border-t border-[#B3955D]/20">
             <div className="flex items-center">
               <span className="font-semibold">Location:</span>{" "}
@@ -136,11 +173,10 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
           </div>
         </CardContent>
 
-        {/* Discord Section */}
         <CardFooter className="py-2 flex flex-col gap-1">
           <Button
             className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white"
-            onClick={() => window.open(clan.discordUrl, "_blank")}
+            onClick={handleDiscordJoin}
           >
             <SiDiscord className="w-4 h-4" />
             Join Discord
