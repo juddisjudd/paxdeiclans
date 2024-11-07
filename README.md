@@ -13,7 +13,7 @@ A clan discovery platform for Pax Dei, allowing players to find and join clans t
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
 - **Backend**: Prisma, PostgreSQL (via Vercel Postgres)
 - **UI Components**: shadcn/ui
 - **Deployment**: Vercel
@@ -53,7 +53,7 @@ For support, feature requests, or bug reports, please open an issue in the GitHu
 
 - Built for the Pax Dei community
 - Uses shadcn/ui for component styling
-- Discord integration for real-time server stats
+- Discord integration for real-time server stats & Authentication.
 
 ---
 
