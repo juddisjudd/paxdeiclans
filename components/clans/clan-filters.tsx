@@ -10,7 +10,7 @@ import { tagOptions, locationOptions } from "@/lib/constants";
 import { type FilterState } from "@/lib/types";
 import { X } from "lucide-react";
 import { LanguageSelect } from "./language-select";
-import { AddClanDialog } from "./add-clan-dialog";
+import { ClanDialog } from "./clan-dialog";
 import { type ClanFormData } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -95,7 +95,7 @@ export function ClanFilters({
               />
             </div>
             <div className="pt-7">
-              <AddClanDialog onClanAdd={onClanAdd} />
+              <ClanDialog mode="add" onClanSubmit={onClanAdd} />
             </div>
           </div>
         </div>

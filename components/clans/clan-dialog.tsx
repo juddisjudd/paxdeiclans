@@ -19,13 +19,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { tagOptions, locationOptions, languageOptions } from "@/lib/constants";
-import { type ClanFormData } from "@/lib/types";
+import { type ClanFormData, type Clan } from "@/lib/types";
 import { AlertCircle, Link, Loader2 } from "lucide-react";
 import { CharacterCounter } from "../ui/character-counter";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { isValidImageUrl, checkImageLoads } from "@/lib/validations";
 import Image from "next/image";
+
+type FormErrors = Partial<Record<keyof ClanFormData, string>>;
 
 const MAX_TAGS = 5;
 
@@ -39,8 +41,12 @@ const defaultClanData: ClanFormData = {
   discordUrl: "",
 };
 
-interface AddClanDialogProps {
-  onClanAdd: (clan: ClanFormData) => Promise<void>;
+interface ClanDialogProps {
+  mode: "add" | "edit";
+  clan?: Clan;
+  onClanSubmit: (clan: ClanFormData) => Promise<void>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const RequiredLabel: React.FC<{ children: React.ReactNode }> = ({
@@ -54,22 +60,62 @@ const RequiredLabel: React.FC<{ children: React.ReactNode }> = ({
   </span>
 );
 
-export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState<ClanFormData>(defaultClanData);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+export function ClanDialog({
+  mode,
+  clan,
+  onClanSubmit,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
+}: ClanDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+  const onOpenChange = externalOnOpenChange ?? setInternalOpen;
+
+  const [formData, setFormData] = useState<ClanFormData>(
+    mode === "edit" && clan
+      ? {
+          name: clan.name,
+          imageUrl: clan.imageUrl || "",
+          description: clan.description,
+          tags: clan.tags as string[],
+          location: clan.location.replace("_", "/"),
+          language: clan.language,
+          discordUrl: clan.discordUrl,
+        }
+      : defaultClanData
+  );
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    mode === "edit" ? clan?.imageUrl || null : null
+  );
   const [isCheckingImage, setIsCheckingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof ClanFormData, string>>
-  >({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const { toast } = useToast();
 
   const resetForm = () => {
-    setFormData(defaultClanData);
+    if (mode === "edit" && clan) {
+      setFormData({
+        name: clan.name,
+        imageUrl: clan.imageUrl || "",
+        description: clan.description,
+        tags: clan.tags as string[],
+        location: clan.location.replace("_", "/"),
+        language: clan.language,
+        discordUrl: clan.discordUrl,
+      });
+      setImagePreview(clan.imageUrl);
+    } else {
+      setFormData(defaultClanData);
+      setImagePreview(null);
+    }
     setErrors({});
-    setImagePreview(null);
   };
+
+  useEffect(() => {
+    if (!open) {
+      resetForm();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!formData.imageUrl) {
@@ -188,20 +234,27 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
     setIsSubmitting(true);
 
     try {
-      await onClanAdd(formData);
+      await onClanSubmit(formData);
       toast({
         title: "Success!",
-        description: "Your clan has been created successfully",
+        description:
+          mode === "add"
+            ? "Your clan has been created successfully"
+            : "Your clan has been updated successfully",
         duration: 3000,
       });
-      resetForm();
-      setOpen(false);
+      onOpenChange(false);
     } catch (error) {
-      console.error("Failed to add clan:", error);
+      console.error(
+        mode === "add" ? "Failed to add clan:" : "Failed to update clan:",
+        error
+      );
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to create clan",
+          error instanceof Error
+            ? error.message
+            : `Failed to ${mode === "add" ? "create" : "update"} clan`,
         variant: "destructive",
       });
     } finally {
@@ -213,29 +266,15 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
     if (!isOpen && isSubmitting) {
       toast({
         title: "Warning",
-        description: "Please wait while your clan is being created",
+        description: `Please wait while your clan is being ${
+          mode === "add" ? "created" : "updated"
+        }`,
         variant: "destructive",
       });
       return;
     }
 
-    setOpen(isOpen);
-    if (!isOpen) {
-      if (
-        Object.keys(formData).some(
-          (key) =>
-            formData[key as keyof ClanFormData] !==
-            defaultClanData[key as keyof ClanFormData]
-        )
-      ) {
-        toast({
-          title: "Form Reset",
-          description: "Your form data has been cleared",
-          duration: 2000,
-        });
-      }
-      resetForm();
-    }
+    onOpenChange(isOpen);
   };
 
   const handleTagChange = (tag: string) => {
@@ -279,14 +318,18 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleCloseDialog}>
-      <DialogTrigger asChild>
-        <Button className="bg-[#B3955D] hover:bg-[#8C714A] text-white">
-          Add Clan
-        </Button>
-      </DialogTrigger>
+      {mode === "add" && (
+        <DialogTrigger asChild>
+          <Button className="bg-[#B3955D] hover:bg-[#8C714A] text-white">
+            Add Clan
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Clan</DialogTitle>
+          <DialogTitle>
+            {mode === "add" ? "Add New Clan" : "Edit Clan"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -523,7 +566,13 @@ export function AddClanDialog({ onClanAdd }: AddClanDialogProps) {
             className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Adding..." : "Add Clan"}
+            {isSubmitting
+              ? mode === "add"
+                ? "Adding..."
+                : "Saving..."
+              : mode === "add"
+              ? "Add Clan"
+              : "Save Changes"}
           </Button>
         </form>
       </DialogContent>

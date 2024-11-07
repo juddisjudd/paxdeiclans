@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { type Prisma } from "@prisma/client";
 import { getDiscordInviteInfo } from "@/lib/discord-utils";
+import { auth } from "@/auth";
 
 const ClanSchema = z.object({
   name: z.string().min(3).max(100),
@@ -91,6 +92,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const json = await request.json();
     const data = ClanSchema.parse({
@@ -109,6 +116,7 @@ export async function POST(request: Request) {
 
     const prismaData = {
       ...data,
+      ownerId: session.user.id,
       imageUrl: data.imageUrl || null,
       location: data.location.replace("/", "_") as any,
       discordMembers: discordInfo.memberCount || null,

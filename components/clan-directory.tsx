@@ -1,11 +1,13 @@
 "use client";
 
 import React from "react";
+import { useSession, signIn } from "next-auth/react";
 import { ClanFilters } from "./clans/clan-filters";
 import { type FilterState, type ClanFormData, type Clan } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import ClanStats from "./clans/clan-stats";
+import { UserMenu } from "./user-menu";
 
 interface ClanDirectoryProps {
   children: React.ReactNode;
@@ -16,6 +18,7 @@ interface ClanDirectoryProps {
 }
 
 export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
+  const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -98,6 +101,10 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
   };
 
   const handleClanAdd = async (clanData: ClanFormData) => {
+    if (!session) {
+      signIn("discord");
+      return;
+    }
     try {
       const response = await fetch("/api/clans", {
         method: "POST",
@@ -147,9 +154,18 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
     <div className="min-h-screen bg-[#F5F2EA] p-6 flex flex-col">
       <div className="max-w-6xl mx-auto space-y-6 flex-grow">
         <div className="text-center space-y-2">
-            <h1 className="text-4xl font-serif text-[#4A3D2C] hover:text-[#6B5C45] cursor-pointer" onClick={() => router.push("/")}>
-            Pax Dei Clan Directory
+          <div className="flex justify-between items-center">
+            <div className="flex-1" /> {/* Spacer */}
+            <h1
+              className="flex-1 text-4xl font-serif text-[#4A3D2C] hover:text-[#6B5C45] cursor-pointer"
+              onClick={() => router.push("/")}
+            >
+              Pax Dei Clan Directory
             </h1>
+            <div className="flex-1 flex justify-end">
+              <UserMenu />
+            </div>
+          </div>
           <p className="text-[#6B5C45]">
             Find a clan and begin your medieval journey.
           </p>
