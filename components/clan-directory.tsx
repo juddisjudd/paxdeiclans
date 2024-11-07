@@ -154,21 +154,43 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
     <div className="min-h-screen bg-[#F5F2EA] p-6 flex flex-col">
       <div className="max-w-6xl mx-auto space-y-6 flex-grow">
         <div className="text-center space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="flex-1" /> {/* Spacer */}
+          {/* Mobile layout (default) */}
+          <div className="flex flex-col items-center gap-2 md:hidden">
             <h1
-              className="flex-1 text-4xl font-serif text-[#4A3D2C] hover:text-[#6B5C45] cursor-pointer"
+              className="text-4xl font-serif text-[#4A3D2C] hover:text-[#6B5C45] cursor-pointer"
               onClick={() => router.push("/")}
             >
               Pax Dei Clan Directory
             </h1>
-            <div className="flex-1 flex justify-end">
+            <p className="text-[#6B5C45]">
+              Find a clan and begin your medieval journey.
+            </p>
+            <div className="mt-2">
               <UserMenu />
             </div>
           </div>
-          <p className="text-[#6B5C45]">
-            Find a clan and begin your medieval journey.
-          </p>
+
+          {/* Desktop layout (md and up) */}
+          <div className="hidden md:block">
+            <div className="flex justify-between items-center">
+              <div className="flex-1" /> {/* Spacer */}
+              <div className="flex-1">
+                <h1
+                  className="text-4xl font-serif text-[#4A3D2C] hover:text-[#6B5C45] cursor-pointer"
+                  onClick={() => router.push("/")}
+                >
+                  Pax Dei Clan Directory
+                </h1>
+                <p className="text-[#6B5C45]">
+                  Find a clan and begin your medieval journey.
+                </p>
+              </div>
+              <div className="flex-1 flex justify-end">
+                <UserMenu />
+              </div>
+            </div>
+          </div>
+
           <ClanStats totalClans={initialData.totalCount} />
         </div>
 
