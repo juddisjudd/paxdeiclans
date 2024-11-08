@@ -102,9 +102,14 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
 
   const handleClanAdd = async (clanData: ClanFormData) => {
     if (!session) {
-      signIn("discord");
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to add a clan",
+        variant: "destructive",
+      });
       return;
     }
+
     try {
       const response = await fetch("/api/clans", {
         method: "POST",

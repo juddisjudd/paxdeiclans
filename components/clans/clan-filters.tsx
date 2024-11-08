@@ -13,6 +13,9 @@ import { LanguageSelect } from "./language-select";
 import { ClanDialog } from "./clan-dialog";
 import { type ClanFormData } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "../ui/button";
 
 interface ClanFiltersProps {
   filters: FilterState;
@@ -31,6 +34,19 @@ export function ClanFilters({
   onClanAdd,
 }: ClanFiltersProps) {
   const router = useRouter();
+  const { toast } = useToast();
+  const { data: session } = useSession();
+
+  const handleAddClanClick = () => {
+    if (!session) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to add a clan",
+        variant: "destructive",
+      });
+      return;
+    }
+  };
 
   const handleClearFilters = () => {
     router.push("/");
@@ -95,7 +111,16 @@ export function ClanFilters({
               />
             </div>
             <div className="pt-7">
-              <ClanDialog mode="add" onClanSubmit={onClanAdd} />
+              {session ? (
+                <ClanDialog mode="add" onClanSubmit={onClanAdd} />
+              ) : (
+                <Button
+                  onClick={handleAddClanClick}
+                  className="bg-[#B3955D] hover:bg-[#8C714A] text-white"
+                >
+                  Add Clan
+                </Button>
+              )}
             </div>
           </div>
         </div>
