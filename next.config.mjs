@@ -32,6 +32,10 @@ const nextConfig = {
         },
       ],
     },
+    env: {
+      UMAMI_SRC: process.env.UMAMI_SRC,
+      UMAMI_ID: process.env.UMAMI_ID,
+    },
   };
   
   export default nextConfig;

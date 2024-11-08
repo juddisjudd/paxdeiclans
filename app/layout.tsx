@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import AuthProvider from "@/components/providers/session-provider";
 import { auth } from "@/auth";
+import Script from 'next/script';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,6 +30,13 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <Script
+          defer
+          src={process.env.UMAMI_SRC!}
+          data-website-id={process.env.UMAMI_ID!}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
