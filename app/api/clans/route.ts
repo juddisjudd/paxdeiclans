@@ -55,13 +55,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  const origin = request.headers.get("origin");
-  if (
-    process.env.NODE_ENV === "production" &&
-    origin &&
-    !origin.includes(process.env.NEXT_PUBLIC_SITE_URL || "")
-  ) {
-    return NextResponse.json({ error: "Unauthorized origin" }, { status: 401 });
+  const origin = request.headers.get('origin');
+  if (process.env.NODE_ENV === 'production' && origin) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
+    const requestOrigin = origin.replace(/\/$/, '');
+    
+    if (!requestOrigin.includes(siteUrl || '')) {
+      console.log('Unauthorized origin:', {
+        requestOrigin,
+        allowedOrigin: siteUrl
+      });
+      return NextResponse.json(
+        { error: "Unauthorized origin" },
+        { status: 401 }
+      );
+    }
   }
 
   const { searchParams } = new URL(request.url);
@@ -131,13 +139,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  const origin = request.headers.get("origin");
-  if (
-    process.env.NODE_ENV === "production" &&
-    origin &&
-    !origin.includes(process.env.NEXT_PUBLIC_SITE_URL || "")
-  ) {
-    return NextResponse.json({ error: "Unauthorized origin" }, { status: 401 });
+  const origin = request.headers.get('origin');
+  if (process.env.NODE_ENV === 'production' && origin) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
+    const requestOrigin = origin.replace(/\/$/, '');
+    
+    if (!requestOrigin.includes(siteUrl || '')) {
+      console.log('Unauthorized origin:', {
+        requestOrigin,
+        allowedOrigin: siteUrl
+      });
+      return NextResponse.json(
+        { error: "Unauthorized origin" },
+        { status: 401 }
+      );
+    }
   }
 
   const session = await auth();
