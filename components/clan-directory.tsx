@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { useSession, signIn } from "next-auth/react";
+import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import { ClanFilters } from "./clans/clan-filters";
 import { type FilterState, type ClanFormData, type Clan } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -24,20 +24,18 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const currentFilters: FilterState = {
+  const [localFilters, setLocalFilters] = useState({
     tags: searchParams.getAll("tags[]"),
     location: searchParams.get("location") || "all",
     language: searchParams.get("language") || "all",
     page: Number(searchParams.get("page")) || 1,
-  };
+  });
 
   const updateURL = (newFilters: FilterState) => {
     const params = new URLSearchParams(searchParams.toString());
 
     params.delete("tags[]");
-    newFilters.tags.forEach((tag) => {
-      params.append("tags[]", tag);
-    });
+    newFilters.tags.forEach((tag) => params.append("tags[]", tag));
 
     if (newFilters.location !== "all") {
       params.set("location", newFilters.location);
@@ -57,48 +55,48 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
       params.delete("page");
     }
 
-    router.push(`/?${params.toString()}`);
+    router.push(`/?${params.toString()}`, { scroll: false });
   };
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
-    if (key === "tags" && value === "") {
-      updateURL({
-        ...currentFilters,
-        tags: [],
-        page: 1,
-      });
-    } else if (key === "tags") {
-      updateURL({
-        ...currentFilters,
-        tags: [value],
-        page: 1,
-      });
+    const newFilters = { ...localFilters };
+
+    if (key === "tags") {
+      newFilters.tags = value ? [value] : [];
     } else if (key === "location" || key === "language") {
-      updateURL({
-        ...currentFilters,
-        [key]: value,
-        page: 1,
-      });
+      newFilters[key] = value;
     }
+    newFilters.page = 1;
+
+    setLocalFilters(newFilters);
+    updateURL(newFilters);
   };
 
   const handleTagToggle = (tag: string) => {
-    const newTags = currentFilters.tags.includes(tag)
-      ? currentFilters.tags.filter((t) => t !== tag)
-      : [...currentFilters.tags, tag];
+    const newTags = localFilters.tags.includes(tag)
+      ? localFilters.tags.filter((t) => t !== tag)
+      : [...localFilters.tags, tag];
 
-    updateURL({
-      ...currentFilters,
+    const newFilters = {
+      ...localFilters,
       tags: newTags,
       page: 1,
-    });
+    };
+
+    setLocalFilters(newFilters);
+    updateURL(newFilters);
   };
 
-  const handlePageChange = (page: number) => {
-    updateURL({
-      ...currentFilters,
-      page,
-    });
+  const handleClearFilters = () => {
+    const defaultFilters = {
+      tags: [],
+      location: "all",
+      language: "all",
+      page: 1,
+    };
+    setLocalFilters(defaultFilters);
+    router.push("/", { scroll: false });
+    router.refresh();
   };
 
   const handleClanAdd = async (clanData: ClanFormData) => {
@@ -151,11 +149,6 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
     }
   };
 
-  const handleClearFilters = () => {
-    router.push("/");
-    router.refresh();
-  };
-
   return (
     <div className="min-h-screen bg-[#F5F2EA] p-6 flex flex-col">
       <div className="max-w-6xl mx-auto space-y-6 flex-grow">
@@ -201,10 +194,10 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
         </div>
 
         <ClanFilters
-          filters={currentFilters}
+          filters={localFilters}
           onFilterChange={handleFilterChange}
           onTagToggle={handleTagToggle}
-          selectedTags={currentFilters.tags}
+          selectedTags={localFilters.tags}
           onClanAdd={handleClanAdd}
           onClearFilters={handleClearFilters}
         />

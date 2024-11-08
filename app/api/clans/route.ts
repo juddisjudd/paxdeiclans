@@ -1,9 +1,29 @@
 import { NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { type Prisma } from "@prisma/client";
 import { getDiscordInviteInfo } from "@/lib/discord-utils";
 import { auth } from "@/auth";
+
+const RATE_LIMIT_WINDOW = 60 * 1000;
+const MAX_REQUESTS = 30;
+const requestMap = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const requests = requestMap.get(ip) || [];
+  const recentRequests = requests.filter(
+    (time) => time > now - RATE_LIMIT_WINDOW
+  );
+
+  if (recentRequests.length >= MAX_REQUESTS) {
+    return true;
+  }
+
+  requestMap.set(ip, [...recentRequests, now]);
+  return false;
+}
 
 const ClanSchema = z.object({
   name: z.string().min(3).max(100),
@@ -29,7 +49,21 @@ const ClanSchema = z.object({
   discordUrl: z.string().regex(/^https:\/\/discord\.gg\//),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const ip = request.ip || "unknown";
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
+  const origin = request.headers.get("origin");
+  if (
+    process.env.NODE_ENV === "production" &&
+    origin &&
+    !origin.includes(process.env.NEXT_PUBLIC_SITE_URL || "")
+  ) {
+    return NextResponse.json({ error: "Unauthorized origin" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const tags = searchParams.getAll("tags[]");
   const location = searchParams.get("location") || "all";
@@ -91,9 +125,22 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
-  const session = await auth();
+export async function POST(request: NextRequest) {
+  const ip = request.ip || "unknown";
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
 
+  const origin = request.headers.get("origin");
+  if (
+    process.env.NODE_ENV === "production" &&
+    origin &&
+    !origin.includes(process.env.NEXT_PUBLIC_SITE_URL || "")
+  ) {
+    return NextResponse.json({ error: "Unauthorized origin" }, { status: 401 });
+  }
+
+  const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

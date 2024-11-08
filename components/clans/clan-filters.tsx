@@ -12,7 +12,7 @@ import { X } from "lucide-react";
 import { LanguageSelect } from "./language-select";
 import { ClanDialog } from "./clan-dialog";
 import { type ClanFormData } from "@/lib/types";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "../ui/button";
@@ -32,8 +32,8 @@ export function ClanFilters({
   onTagToggle,
   selectedTags,
   onClanAdd,
+  onClearFilters,
 }: ClanFiltersProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const { data: session } = useSession();
 
@@ -46,11 +46,6 @@ export function ClanFilters({
       });
       return;
     }
-  };
-
-  const handleClearFilters = () => {
-    router.push("/");
-    router.refresh();
   };
 
   return (
@@ -126,12 +121,12 @@ export function ClanFilters({
         </div>
       </div>
 
-      {(selectedTags.length > 0 ||
+      {(filters.tags.length > 0 ||
         filters.location !== "all" ||
         filters.language !== "all") && (
         <div className="flex items-center justify-end">
           <button
-            onClick={handleClearFilters}
+            onClick={onClearFilters}
             className="text-sm text-[#B3955D] hover:text-[#8C714A] flex items-center gap-1"
           >
             <X className="h-4 w-4" />
