@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import ClanStats from "./clans/clan-stats";
 import { UserMenu } from "./user-menu";
+import { Footer } from "./footer";
 
 interface ClanDirectoryProps {
   children: React.ReactNode;
@@ -210,22 +211,7 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
 
         {children}
       </div>
-
-      <footer className="mt-8 py-4 text-center text-[#6B5C45] border-t border-[#B3955D]">
-        <div className="max-w-6xl mx-auto px-4">
-          <p>
-            &copy; {new Date().getFullYear()} Pax Dei Clan Directory |
-            <a
-              href="https://ko-fi.com/ohitsjudd"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-2 text-[#B3955D] hover:text-[#8C714A]"
-            >
-              Support This Project
-            </a>
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
