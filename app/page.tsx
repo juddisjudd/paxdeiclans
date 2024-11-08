@@ -68,11 +68,13 @@ async function getFilteredClans(searchParams: {
 
 async function FilteredClans({
   searchParams,
+  priority = false,
 }: {
   searchParams: PageProps["searchParams"];
+  priority?: boolean;
 }) {
   const data = await getFilteredClans(searchParams);
-  return <ClanGrid initialData={data} />;
+  return <ClanGrid initialData={data} priority={priority} />;
 }
 
 export default async function Page({ searchParams }: PageProps) {
@@ -85,7 +87,7 @@ export default async function Page({ searchParams }: PageProps) {
           key={JSON.stringify(searchParams)}
           fallback={<ClanGridSkeleton />}
         >
-          <FilteredClans searchParams={searchParams} />
+          <FilteredClans searchParams={searchParams} priority={true} />
         </Suspense>
       </ClanDirectory>
       <Toaster />

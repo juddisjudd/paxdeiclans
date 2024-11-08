@@ -18,10 +18,14 @@ import { type Clan, type ClanFormData } from "@/lib/types";
 
 interface ClanCardProps {
   clan: Clan;
+  priority?: boolean;
   onBumpSuccess?: () => void;
 }
-
-export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
+export function ClanCard({
+  clan,
+  priority = false,
+  onBumpSuccess,
+}: ClanCardProps) {
   const { data: session } = useSession();
   const isOwner = session?.user?.id === clan.ownerId;
   const [isBumping, setIsBumping] = useState(false);
@@ -132,8 +136,9 @@ export function ClanCard({ clan, onBumpSuccess }: ClanCardProps) {
             alt={clan.name}
             fill
             className="object-cover"
+            priority={priority}
+            loading={priority ? "eager" : "lazy"}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority={false}
           />
           <div className="absolute bottom-2 left-2">
             {isOwner && (

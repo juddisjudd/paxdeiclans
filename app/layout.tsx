@@ -2,18 +2,22 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import AuthProvider from "@/components/providers/session-provider";
-import { auth } from "@/auth";
-import Script from 'next/script';
+import Script from "next/script";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
+  preload: true,
+  display: "swap",
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
+  preload: false,
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,8 +30,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
-
   return (
     <html lang="en">
       <head>
@@ -35,6 +37,7 @@ export default async function RootLayout({
           defer
           src={process.env.UMAMI_SRC!}
           data-website-id={process.env.UMAMI_ID!}
+          strategy="afterInteractive"
         />
       </head>
       <body

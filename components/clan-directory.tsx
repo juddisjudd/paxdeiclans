@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import ClanStats from "./clans/clan-stats";
 import { UserMenu } from "./user-menu";
 import { Footer } from "./footer";
+import { Suspense } from "react";
 
 interface ClanDirectoryProps {
   children: React.ReactNode;
@@ -190,17 +191,23 @@ export function ClanDirectory({ children, initialData }: ClanDirectoryProps) {
             </div>
           </div>
 
-          <ClanStats totalClans={initialData.totalCount} />
+          <Suspense
+            fallback={<div className="h-6 bg-gray-200 animate-pulse" />}
+          >
+            <ClanStats totalClans={initialData.totalCount} />
+          </Suspense>
         </div>
 
-        <ClanFilters
-          filters={localFilters}
-          onFilterChange={handleFilterChange}
-          onTagToggle={handleTagToggle}
-          selectedTags={localFilters.tags}
-          onClanAdd={handleClanAdd}
-          onClearFilters={handleClearFilters}
-        />
+        <Suspense fallback={<div className="h-24 bg-gray-200 animate-pulse" />}>
+          <ClanFilters
+            filters={localFilters}
+            onFilterChange={handleFilterChange}
+            onTagToggle={handleTagToggle}
+            selectedTags={localFilters.tags}
+            onClanAdd={handleClanAdd}
+            onClearFilters={handleClearFilters}
+          />
+        </Suspense>
 
         {children}
       </div>
