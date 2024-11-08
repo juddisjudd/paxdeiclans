@@ -92,19 +92,33 @@ export function ClanCard({
     window.open(clan.discordUrl, "_blank");
   };
 
+  // components/clans/clan-card.tsx - Update handleEditClan:
+
   const handleEditClan = async (clanData: ClanFormData) => {
     try {
+      // Transform the data to match Prisma schema
+      const updateData = {
+        name: clanData.name,
+        imageUrl: clanData.imageUrl || null,
+        description: clanData.description,
+        tags: clanData.tags,
+        // Important: Convert location format to match Prisma enum
+        location: clanData.location.replace("/", "_"),
+        language: clanData.language,
+        discordUrl: clanData.discordUrl,
+      };
+
       const response = await fetch(`/api/clans/${clan.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(clanData),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update clan");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update clan");
       }
 
       onBumpSuccess?.();
