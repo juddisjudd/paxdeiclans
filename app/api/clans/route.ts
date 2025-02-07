@@ -8,20 +8,31 @@ import { auth } from "@/auth";
 
 const RATE_LIMIT_WINDOW = 60 * 1000;
 const MAX_REQUESTS = 30;
-const requestMap = new Map<string, number[]>();
+const rateLimit = new Map<string, { count: number; timestamp: number }>();
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
-  const requests = requestMap.get(ip) || [];
-  const recentRequests = requests.filter(
-    (time) => time > now - RATE_LIMIT_WINDOW
-  );
+  const windowStart = now - RATE_LIMIT_WINDOW;
 
-  if (recentRequests.length >= MAX_REQUESTS) {
-    return true;
+  if (Math.random() < 0.1) {
+    for (const [key, value] of rateLimit.entries()) {
+      if (value.timestamp < windowStart) {
+        rateLimit.delete(key);
+      }
+    }
   }
 
-  requestMap.set(ip, [...recentRequests, now]);
+  const record = rateLimit.get(ip) || { count: 0, timestamp: now };
+  if (record.timestamp < windowStart) {
+    record.count = 1;
+    record.timestamp = now;
+  } else if (record.count >= MAX_REQUESTS) {
+    return true;
+  } else {
+    record.count++;
+  }
+
+  rateLimit.set(ip, record);
   return false;
 }
 
@@ -55,15 +66,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  const origin = request.headers.get('origin');
-  if (process.env.NODE_ENV === 'production' && origin) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
-    const requestOrigin = origin.replace(/\/$/, '');
-    
-    if (!requestOrigin.includes(siteUrl || '')) {
-      console.log('Unauthorized origin:', {
+  const origin = request.headers.get("origin");
+  if (process.env.NODE_ENV === "production" && origin) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+    const requestOrigin = origin.replace(/\/$/, "");
+
+    if (!requestOrigin.includes(siteUrl || "")) {
+      console.log("Unauthorized origin:", {
         requestOrigin,
-        allowedOrigin: siteUrl
+        allowedOrigin: siteUrl,
       });
       return NextResponse.json(
         { error: "Unauthorized origin" },
@@ -139,15 +150,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  const origin = request.headers.get('origin');
-  if (process.env.NODE_ENV === 'production' && origin) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
-    const requestOrigin = origin.replace(/\/$/, '');
-    
-    if (!requestOrigin.includes(siteUrl || '')) {
-      console.log('Unauthorized origin:', {
+  const origin = request.headers.get("origin");
+  if (process.env.NODE_ENV === "production" && origin) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+    const requestOrigin = origin.replace(/\/$/, "");
+
+    if (!requestOrigin.includes(siteUrl || "")) {
+      console.log("Unauthorized origin:", {
         requestOrigin,
-        allowedOrigin: siteUrl
+        allowedOrigin: siteUrl,
       });
       return NextResponse.json(
         { error: "Unauthorized origin" },

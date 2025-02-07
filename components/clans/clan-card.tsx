@@ -21,6 +21,7 @@ interface ClanCardProps {
   priority?: boolean;
   onBumpSuccess?: () => void;
 }
+
 export function ClanCard({
   clan,
   priority = false,
@@ -33,7 +34,32 @@ export function ClanCard({
   const [optimisticLastBumped, setOptimisticLastBumped] = useState<Date | null>(
     null
   );
+  const [imageError, setImageError] = useState(false);
   const { toast } = useToast();
+
+  const handleImageError = async () => {
+    setImageError(true);
+
+    if (clan.imageUrl) {
+      try {
+        const response = await fetch(`/api/clans/${clan.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            imageUrl: null,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to update clan with broken image");
+        }
+      } catch (error) {
+        console.error("Error updating clan with broken image:", error);
+      }
+    }
+  };
 
   const handleBump = async () => {
     if (isBumping) return;
@@ -92,17 +118,13 @@ export function ClanCard({
     window.open(clan.discordUrl, "_blank");
   };
 
-  // components/clans/clan-card.tsx - Update handleEditClan:
-
   const handleEditClan = async (clanData: ClanFormData) => {
     try {
-      // Transform the data to match Prisma schema
       const updateData = {
         name: clanData.name,
         imageUrl: clanData.imageUrl || null,
         description: clanData.description,
         tags: clanData.tags,
-        // Important: Convert location format to match Prisma enum
         location: clanData.location.replace("/", "_"),
         language: clanData.language,
         discordUrl: clanData.discordUrl,
@@ -146,13 +168,18 @@ export function ClanCard({
         {/* Image Section */}
         <div className="relative h-48 flex-shrink-0">
           <Image
-            src={clan.imageUrl || "/images/clan-placeholder.png"}
+            src={
+              !imageError
+                ? clan.imageUrl || "/images/clan-placeholder.png"
+                : "/images/clan-placeholder.png"
+            }
             alt={clan.name}
             fill
             className="object-cover"
             priority={priority}
             loading={priority ? "eager" : "lazy"}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={handleImageError}
           />
           <div className="absolute bottom-2 left-2">
             {isOwner && (

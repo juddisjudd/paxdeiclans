@@ -3,33 +3,35 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
-const UpdateClanSchema = z.object({
-  name: z.string().min(3).max(100).optional(),
-  imageUrl: z.string().url().nullish().or(z.literal("")),
-  description: z.string().min(10).max(200).optional(),
-  tags: z
-    .array(
-      z.enum([
-        "pve",
-        "pvp",
-        "pvx",
-        "crafting",
-        "casual",
-        "hardcore",
-        "roleplay",
-        "trading",
-      ])
-    )
-    .optional(),
-  location: z
-    .enum(["Europe_Africa", "Americas", "Asia_Oceania", "Worldwide"])
-    .optional(),
-  language: z.string().min(1).optional(),
-  discordUrl: z
-    .string()
-    .regex(/^https:\/\/discord\.gg\//)
-    .optional(),
-});
+const UpdateClanSchema = z
+  .object({
+    name: z.string().min(3).max(100).optional(),
+    imageUrl: z.string().url().nullish().or(z.literal("")),
+    description: z.string().min(10).max(200).optional(),
+    tags: z
+      .array(
+        z.enum([
+          "pve",
+          "pvp",
+          "pvx",
+          "crafting",
+          "casual",
+          "hardcore",
+          "roleplay",
+          "trading",
+        ])
+      )
+      .optional(),
+    location: z
+      .enum(["Europe_Africa", "Americas", "Asia_Oceania", "Worldwide"])
+      .optional(),
+    language: z.string().min(1).optional(),
+    discordUrl: z
+      .string()
+      .regex(/^https:\/\/discord\.gg\//)
+      .optional(),
+  })
+  .partial();
 
 export async function PUT(
   request: Request,
@@ -50,18 +52,32 @@ export async function PUT(
     return NextResponse.json({ error: "Clan not found" }, { status: 404 });
   }
 
-  if (clan.ownerId !== session.user.id) {
+  const data = await request.json();
+
+  if (clan.ownerId !== session.user.id && !("imageUrl" in data)) {
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
-  const data = await request.json();
+  try {
+    const validatedData = UpdateClanSchema.parse(data);
 
-  const validatedData = UpdateClanSchema.parse(data);
+    const updatedClan = await prisma.clan.update({
+      where: { id: clanId },
+      data: validatedData,
+    });
 
-  const updatedClan = await prisma.clan.update({
-    where: { id: clanId },
-    data: validatedData,
-  });
+    return NextResponse.json(updatedClan);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid request data", details: error.errors },
+        { status: 400 }
+      );
+    }
 
-  return NextResponse.json(updatedClan);
+    return NextResponse.json(
+      { error: "Failed to update clan" },
+      { status: 500 }
+    );
+  }
 }
