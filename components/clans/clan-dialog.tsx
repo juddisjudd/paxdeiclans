@@ -320,7 +320,7 @@ export function ClanDialog({
     <Dialog open={open} onOpenChange={handleCloseDialog}>
       {mode === "add" && (
         <DialogTrigger asChild>
-            <Button className="bg-[#B3955D] hover:bg-[#8C714A] text-white rounded-md">
+            <Button className="bg-[#B3955D] hover:bg-[#8C714A] text-white rounded-full">
             Add Clan
             </Button>
         </DialogTrigger>
@@ -563,7 +563,7 @@ export function ClanDialog({
 
           <Button
             type="submit"
-            className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white"
+            className="w-full bg-[#B3955D] hover:bg-[#8C714A] text-white rounded-full"
             disabled={isSubmitting}
           >
             {isSubmitting
