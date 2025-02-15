@@ -15,8 +15,8 @@ interface LanguageSelectProps {
 export function LanguageSelect({ value, onChange }: LanguageSelectProps) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="bg-white border-[#B3955D]">
-        <SelectValue placeholder="Select language..." />
+      <SelectTrigger className="bg-white border-[#B3955D] rounded-full">
+        <SelectValue placeholder="All Languages" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">All Languages</SelectItem>

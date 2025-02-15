@@ -19,7 +19,7 @@ export function UserMenu() {
     return (
       <Button
         onClick={() => signIn("discord")}
-        className="bg-[#b3955d] hover:bg-[#d19544] text-white"
+        className="bg-[#5d7bb3] hover:bg-[#476397] text-white rounded-full"
       >
         <SiDiscord className="h-4 w-4" />
         Login with Discord

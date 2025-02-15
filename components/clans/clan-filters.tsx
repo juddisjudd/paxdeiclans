@@ -12,7 +12,6 @@ import { X } from "lucide-react";
 import { LanguageSelect } from "./language-select";
 import { ClanDialog } from "./clan-dialog";
 import { type ClanFormData } from "@/lib/types";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "../ui/button";
@@ -50,39 +49,33 @@ export function ClanFilters({
 
   return (
     <div className="space-y-4">
-      <div className="group">
-        <h3 className="text-sm font-medium text-[#4A3D2C] mb-2">Clan Focus</h3>
-        <div className="flex flex-wrap gap-2">
-          {tagOptions.map((tag) => (
-            <Badge
-              key={tag.value}
-              variant={selectedTags.includes(tag.value) ? "default" : "outline"}
-              className={`cursor-pointer ${
-                selectedTags.includes(tag.value)
-                  ? "bg-[#B3955D] hover:bg-[#8C714A]"
-                  : "hover:bg-[#B3955D]/50"
-              }`}
-              title={tag.description}
-              onClick={() => onTagToggle(tag.value)}
-            >
-              {tag.label}
-            </Badge>
-          ))}
-        </div>
+      <div className="flex flex-wrap gap-2 justify-center">
+      {tagOptions.map((tag) => (
+        <Badge
+        key={tag.value}
+        variant="outline"
+        className={`cursor-pointer px-3 py-1.5 rounded-full text-sm border ${
+          selectedTags.includes(tag.value)
+          ? "bg-[#B39164] hover:bg-[#B39164]/90 text-white border-[#B39164]"
+          : "hover:bg-[#B39164] hover:text-white border-[#B39164] text-[#6B5D4E]"
+        }`}
+        title={tag.description}
+        onClick={() => onTagToggle(tag.value)}
+        >
+        {tag.label}
+        </Badge>
+      ))}
       </div>
 
       <div className="flex gap-4 items-start">
         <div className="grid md:grid-cols-2 gap-4 flex-grow">
           <div>
-            <label className="text-sm font-medium text-[#4A3D2C] mb-2 block">
-              Location/Timezone
-            </label>
             <Select
               value={filters.location}
               onValueChange={(value) => onFilterChange("location", value)}
             >
-              <SelectTrigger className="bg-white border-[#B3955D]">
-                <SelectValue placeholder="Filter by location" />
+              <SelectTrigger className="bg-white border-[#B3955D] rounded-full">
+                <SelectValue placeholder="All Locations" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
@@ -97,21 +90,18 @@ export function ClanFilters({
 
           <div className="flex gap-4">
             <div className="flex-grow">
-              <label className="text-sm font-medium text-[#4A3D2C] mb-2 block">
-                Language
-              </label>
               <LanguageSelect
                 value={filters.language}
                 onChange={(value) => onFilterChange("language", value)}
               />
             </div>
-            <div className="pt-7">
+            <div>
               {session ? (
                 <ClanDialog mode="add" onClanSubmit={onClanAdd} />
               ) : (
                 <Button
                   onClick={handleAddClanClick}
-                  className="bg-[#B3955D] hover:bg-[#8C714A] text-white"
+                  className="bg-[#B3955D] hover:bg-[#8C714A] text-white rounded-full"
                 >
                   Add Clan
                 </Button>
