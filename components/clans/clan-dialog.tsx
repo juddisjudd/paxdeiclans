@@ -320,9 +320,9 @@ export function ClanDialog({
     <Dialog open={open} onOpenChange={handleCloseDialog}>
       {mode === "add" && (
         <DialogTrigger asChild>
-          <Button className="bg-[#B3955D] hover:bg-[#8C714A] text-white">
+            <Button className="bg-[#B3955D] hover:bg-[#8C714A] text-white rounded-md">
             Add Clan
-          </Button>
+            </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[425px]">
